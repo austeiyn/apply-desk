@@ -1,9 +1,33 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
+const onNetlify = process.env.NETLIFY === "true";
+
+// On Netlify the public site URL defaults to the site's own address
+// (Netlify's URL variable) when NEXT_PUBLIC_APP_URL isn't set.
+const netlifyAppUrl = !process.env.NEXT_PUBLIC_APP_URL && onNetlify ? process.env.URL : undefined;
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || netlifyAppUrl || "";
+
+// Supabase's public settings are compiled into the site, so a Netlify build
+// without them can never work. Stop early with instructions instead of
+// failing later with a stack trace.
+if (onNetlify && !isDev) {
+  const missing = [
+    !process.env.NEXT_PUBLIC_SUPABASE_URL && "NEXT_PUBLIC_SUPABASE_URL",
+    !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+  ].filter(Boolean);
+  if (missing.length > 0) {
+    throw new Error(
+      `ApplyDesk build stopped: missing environment variable(s) ${missing.join(", ")}. ` +
+        "Add them in Netlify under Project configuration > Environment variables (values from Supabase > Project Settings > API Keys), " +
+        "then trigger a new deploy. See docs/DEPLOYMENT.md.",
+    );
+  }
+}
+
 // HTTPS-only directives apply when the public site is served over HTTPS
 // (always true on Netlify); skipped for local http production runs.
-const isHttps = (process.env.NEXT_PUBLIC_APP_URL ?? "").startsWith("https://");
+const isHttps = appUrl.startsWith("https://");
 
 function supabaseOrigins(): string[] {
   const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,6 +73,7 @@ const nextConfig: NextConfig = {
   // Components/PPR offer little here; plain dynamic rendering keeps the
   // Netlify deployment simple and predictable.
   cacheComponents: false,
+  ...(netlifyAppUrl ? { env: { NEXT_PUBLIC_APP_URL: netlifyAppUrl } } : {}),
   poweredByHeader: false,
   reactStrictMode: true,
   // PDF rendering reads embedded font files from disk at runtime.

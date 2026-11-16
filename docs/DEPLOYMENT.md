@@ -66,13 +66,15 @@ git push -u origin main
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable (anon) key | Needed at build time |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret (service_role) key | Mark as **secret**; Functions scope is enough |
 | `ANTHROPIC_API_KEY` | Anthropic key | Mark as **secret** |
-| `NEXT_PUBLIC_APP_URL` | `https://your-domain.com` | No trailing slash; needed at build time |
+| `NEXT_PUBLIC_APP_URL` | `https://your-domain.com` | *(optional on Netlify)* No trailing slash. Defaults to the site's Netlify address; set it once you use a custom domain |
 | `ANTHROPIC_MODEL` | *(optional)* | Default `claude-opus-5-5` |
 | `ANTHROPIC_FAST_MODE` | *(optional)* `true` | Faster generation, premium pricing |
 
 `NEXT_PUBLIC_*` values are compiled into the site and into its Content Security Policy, so **redeploy after changing them**.
 
 4. Deploy. When it finishes, open the site and register.
+
+If the two `NEXT_PUBLIC_SUPABASE_*` variables are missing, the build stops straight away with a message naming them. Add them and choose **Deploys → Trigger deploy → Deploy site**.
 
 ## 6. Custom domain
 
@@ -112,6 +114,7 @@ AI routes stream progress events while Claude works, which keeps proxies and bro
 
 | Symptom | Likely cause |
 |---|---|
+| Netlify build fails with "ApplyDesk build stopped: missing environment variable(s)" | Add the named variables in Netlify → Project configuration → Environment variables, then trigger a new deploy. |
 | Email links go to `localhost` | Supabase **Site URL** still points at localhost. |
 | "Link invalid or expired" after clicking a verification email | Redirect URL not allow-listed, or the email template link wasn't updated. |
 | AI features show "aren't configured" | `ANTHROPIC_API_KEY` missing; redeploy after adding it. |

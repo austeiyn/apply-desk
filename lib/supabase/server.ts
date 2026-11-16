@@ -10,8 +10,10 @@ import { assertSupabaseConfigured, publicEnv } from "@/lib/env";
  * Create a new client for every request; never share one across requests.
  */
 export async function createClient() {
-  assertSupabaseConfigured();
+  // Read cookies first: it marks the route as per-request, so pages that use
+  // Supabase are never pre-rendered at build time, even when misconfigured.
   const cookieStore = await cookies();
+  assertSupabaseConfigured();
 
   return createServerClient<Database>(publicEnv.supabaseUrl, publicEnv.supabasePublishableKey, {
     cookies: {
