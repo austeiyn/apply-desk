@@ -5,7 +5,7 @@ import { Upload } from "lucide-react";
 import { ExperienceSection, EducationSection } from "@/components/profile/experience-education";
 import { CertificationsSection, ExtrasSection, ProjectsSection } from "@/components/profile/other-sections";
 import { CareerForm, PersonalForm } from "@/components/profile/profile-forms";
-import { ProfileTabs } from "@/components/profile/profile-tabs";
+import { UrlTabs } from "@/components/shared/url-tabs";
 import { SkillsSection } from "@/components/profile/skills-section";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/feedback";
@@ -52,7 +52,7 @@ export default async function ProfilePage() {
       </div>
 
       <Suspense>
-        <ProfileTabs
+        <UrlTabs
           defaultTab="personal"
           tabs={[
             { value: "personal", label: "Personal", content: <PersonalForm profile={bundle.profile} candidate={bundle.candidate} /> },

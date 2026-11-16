@@ -1,14 +1,17 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Carlito fonts
-Source: https://github.com/googlefonts/carlito
+Upstream-Name: Liberation Fonts
+Source: https://github.com/liberationfonts
 
 Files: *
-Copyright: 2010-2013 by tyPoland Lukasz Dziedzic with Reserved Font Name "Carlito".
-License: OFL-1.1
- Copyright (c) 2010-2013 by tyPoland Lukasz Dziedzic with Reserved Font Name "Carlito".
- .
+Copyright:
+ Digitized data copyright (c) 2010 Google Corporation with Reserved Font Arimo, Tinos and Cousine.
+ Copyright (c) 2012 Red Hat, Inc. with Reserved Font Name Liberation.
+License: SIL-OFL-1.1
  This Font Software is licensed under the SIL Open Font License,
- Version 1.1 as shown below.
+ Version 1.1.
+ .
+ This license is copied below, and is also available with a FAQ at:
+ http://scripts.sil.org/OFL
  .
  SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
  .
@@ -26,6 +29,7 @@ License: OFL-1.1
  however, cannot be released under any other type of license.  The
  requirement for fonts to remain under this license does not apply to
  any document created using the fonts or their derivatives.
+ .
  .
  .
  DEFINITIONS
@@ -102,7 +106,12 @@ License: OFL-1.1
  .
 
 Files: debian/*
-Copyright: 2014-2023, Fabian Greffrath <fabian@debian.org>
+Copyright:
+ 2008 Alan Baghumian <alan@technotux.org>
+ 2008-2018 Holger Levsen <holger@debian.org>
+ 2009-2012 Christian Perrier <bubulle@debian.org>
+ 2011-2023 Fabian Greffrath <fabian@debian.org>
+ 2018 Rene Engelhard <rene@debian.org>
 License: GPL-2+
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -115,7 +124,7 @@ License: GPL-2+
  GNU General Public License for more details.
  .
  You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>
+ along with this program. If not, see <https://www.gnu.org/licenses/>
  .
  On Debian systems, the complete text of the GNU General
  Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".

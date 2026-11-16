@@ -3,13 +3,13 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/misc";
 
-export interface ProfileTab {
+export interface UrlTab {
   value: string;
   label: string;
   content: React.ReactNode;
 }
 
-export function ProfileTabs({ tabs, defaultTab }: { tabs: ProfileTab[]; defaultTab: string }) {
+export function UrlTabs({ tabs, defaultTab }: { tabs: UrlTab[]; defaultTab: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
