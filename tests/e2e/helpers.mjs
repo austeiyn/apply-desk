@@ -58,3 +58,12 @@ export async function login(page, email, password) {
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
 }
+
+/**
+ * Test-only: clear rate-limit counters so back-to-back suite runs from the
+ * same IP don't trip the (intentional) login/AI limits.
+ */
+export async function resetRateLimits(adminClient) {
+  const { error } = await adminClient.from("rate_limits").delete().neq("key", "");
+  if (error) throw new Error(`could not reset rate limits: ${error.message}`);
+}

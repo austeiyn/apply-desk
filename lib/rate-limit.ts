@@ -38,3 +38,10 @@ export async function clientIp(): Promise<string> {
     "unknown"
   );
 }
+
+/** Clear a counter early (used to release short-lived "in progress" locks). */
+export async function releaseRateLimit(key: string): Promise<void> {
+  if (!isServiceRoleConfigured()) return;
+  const { error } = await createAdminClient().from("rate_limits").delete().eq("key", key.slice(0, 200));
+  if (error) console.error("[rate-limit] release failed", error.message);
+}

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isAiConfigured, isServiceRoleConfigured } from "@/lib/env.server";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, releaseRateLimit } from "@/lib/rate-limit";
 import { getPlatformSettings } from "@/lib/settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AiError } from "./errors";
@@ -42,9 +42,11 @@ export async function getAiQuota(userId: string): Promise<AiQuota> {
 
 /**
  * Pre-flight checks before spending tokens. Throws AiError with a
- * user-facing message when the request must not proceed.
+ * user-facing message when the request must not proceed. Returns a release
+ * function for the duplicate-request lock, which callers must invoke when
+ * the request finishes (success or failure).
  */
-export async function assertAiAllowed(userId: string, opts: { dedupeKey?: string } = {}): Promise<void> {
+export async function assertAiAllowed(userId: string, opts: { dedupeKey?: string } = {}): Promise<() => Promise<void>> {
   if (!isAiConfigured()) throw new AiError("not_configured");
   if (!isServiceRoleConfigured()) {
     throw new AiError("not_configured", "AI usage metering isn't configured. The administrator needs to set SUPABASE_SERVICE_ROLE_KEY.");
@@ -53,14 +55,19 @@ export async function assertAiAllowed(userId: string, opts: { dedupeKey?: string
   const settings = await getPlatformSettings();
   if (!settings.ai_enabled) throw new AiError("disabled");
 
-  if (opts.dedupeKey && !(await rateLimit(`ai-dup:${userId}:${opts.dedupeKey}`, 1, 15))) {
-    throw new AiError("duplicate");
-  }
-  if (!(await rateLimit(`ai-burst:${userId}`, 8, 60))) throw new AiError("rate_limited");
-
   const quota = await getAiQuota(userId);
   if (quota.dailyLimit > 0 && quota.dailyUsed >= quota.dailyLimit) throw new AiError("quota_daily");
   if (quota.monthlyLimit > 0 && quota.monthlyUsed >= quota.monthlyLimit) throw new AiError("quota_monthly");
+  if (!(await rateLimit(`ai-burst:${userId}`, 8, 60))) throw new AiError("rate_limited");
+
+  // Lock taken last so a rejected request never holds it. The window (3 min)
+  // only matters if the process dies before releasing it.
+  if (opts.dedupeKey) {
+    const key = `ai-dup:${userId}:${opts.dedupeKey}`;
+    if (!(await rateLimit(key, 1, 180))) throw new AiError("duplicate");
+    return () => releaseRateLimit(key);
+  }
+  return async () => {};
 }
 
 export interface UsageRecord {

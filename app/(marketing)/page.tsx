@@ -126,9 +126,17 @@ function HeroMock() {
   );
 }
 
-export default function LandingPage() {
+export default async function LandingPage({ searchParams }: PageProps<"/">) {
+  const deleted = (await searchParams).deleted === "1";
   return (
     <>
+      {deleted ? (
+        <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+          <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            Your account and all associated data have been permanently deleted.
+          </p>
+        </div>
+      ) : null}
       {/* Hero */}
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 md:pt-20 lg:grid-cols-[1.05fr_1fr]">
         <div className="space-y-6">

@@ -56,10 +56,10 @@ export function ActivityChart({ data }: { data: Point[] }) {
       ) : (
         <div className="h-44" role="img" aria-label="Applications saved and submitted per week, last 12 weeks">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} barGap={2} barCategoryGap="28%" margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
+            <BarChart data={data} barGap={2} barCategoryGap="28%" margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
               <CartesianGrid vertical={false} stroke="#ece9e2" />
               <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5a6372" }} interval="preserveStartEnd" minTickGap={16} />
-              <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5a6372" }} width={40} />
+              <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5a6372" }} width={36} />
               <Tooltip cursor={{ fill: "rgba(15,26,43,0.04)" }} content={<ChartTooltip />} />
               {SERIES.map((s) => (
                 <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.color} radius={[4, 4, 0, 0]} maxBarSize={14} isAnimationActive={false} />

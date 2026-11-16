@@ -1,7 +1,13 @@
 // E2E: registration, email verification, logout, login, protected routes,
 // password reset. Run: node tests/e2e/auth.e2e.mjs (dev server + supabase running)
+import { createRequire } from "node:module";
 import { chromium } from "playwright";
-import { assert, BASE_URL, extractLink, login, registerAndVerify, uniqueEmail, waitForEmail } from "./helpers.mjs";
+import { assert, BASE_URL, extractLink, login, resetRateLimits, uniqueEmail, waitForEmail } from "./helpers.mjs";
+
+const require = createRequire(import.meta.url);
+const { createClient } = require("@supabase/supabase-js");
+require("dotenv").config({ path: ".env.local", quiet: true });
+await resetRateLimits(createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } }));
 
 const browser = await chromium.launch();
 const context = await browser.newContext();

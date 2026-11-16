@@ -65,7 +65,15 @@ const MAX_PROMPT_CHARS = 400_000;
  */
 export async function generateStructured<S extends z.ZodType>(req: StructuredRequest<S>): Promise<StructuredResult<z.infer<S>>> {
   if (req.context.length + req.task.length > MAX_PROMPT_CHARS) throw new AiError("input_too_large");
-  await assertAiAllowed(req.userId, { dedupeKey: req.dedupeKey });
+  const release = await assertAiAllowed(req.userId, { dedupeKey: req.dedupeKey });
+  try {
+    return await runStructured(req);
+  } finally {
+    await release();
+  }
+}
+
+async function runStructured<S extends z.ZodType>(req: StructuredRequest<S>): Promise<StructuredResult<z.infer<S>>> {
 
   const model = serverEnv.anthropicModel;
   const started = Date.now();

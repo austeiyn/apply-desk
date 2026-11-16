@@ -7,7 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
 import { Document, Packer, Paragraph } from "docx";
-import { assert, BASE_URL, uniqueEmail } from "./helpers.mjs";
+import { assert, BASE_URL, resetRateLimits, uniqueEmail } from "./helpers.mjs";
 import { SAMPLE_CV_TEXT } from "./fixtures.mjs";
 import { startMockAnthropic } from "./mock-anthropic.mjs";
 
@@ -16,6 +16,7 @@ const { createClient } = require("@supabase/supabase-js");
 require("dotenv").config({ path: ".env.local", quiet: true });
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+await resetRateLimits(admin);
 const mock = await startMockAnthropic();
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "applydesk-e2e-"));
 
