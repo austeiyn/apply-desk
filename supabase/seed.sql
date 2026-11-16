@@ -1,0 +1,3 @@
+-- Intentionally empty. ApplyDesk ships without demo users or sample data.
+-- Create real accounts through /register, then promote an administrator with
+-- `select public.grant_admin_role('you@example.com');` (see docs/ADMIN.md).
