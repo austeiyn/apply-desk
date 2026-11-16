@@ -29,7 +29,6 @@ export function detectCvType(bytes: Uint8Array): CvMimeType | null {
 export function cleanExtractedText(raw: string): string {
   return raw
     .replace(/\r\n?/g, "\n")
-    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
     .replace(/[   ]/g, " ")
     .replace(/[ \t]+/g, " ")

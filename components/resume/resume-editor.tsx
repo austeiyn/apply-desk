@@ -68,11 +68,14 @@ export function ResumeEditor({
   const [view, setView] = useState<"edit" | "preview">("edit");
 
   // Re-sync when the server sends a new version (e.g. after a restore).
-  useEffect(() => {
+  // Adjusting state during render is React's recommended alternative to an effect.
+  const [syncedVersion, setSyncedVersion] = useState(`${version}:${updatedAt}`);
+  if (syncedVersion !== `${version}:${updatedAt}`) {
+    setSyncedVersion(`${version}:${updatedAt}`);
     setTitle(initialTitle);
     setContent(initialContent);
     setSaved({ title: initialTitle, content: JSON.stringify(initialContent), version, updatedAt });
-  }, [initialTitle, initialContent, version, updatedAt]);
+  }
 
   const dirty = title !== saved.title || JSON.stringify(content) !== saved.content;
 

@@ -23,7 +23,13 @@ export function DownloadMenu({
 }) {
   const go = async (format: "pdf" | "docx") => {
     if (beforeDownload && !(await beforeDownload())) return;
-    window.location.href = `/api/documents/${kind}/${id}?format=${format}`;
+    // Trigger the file download without navigating away from the page.
+    const a = document.createElement("a");
+    a.href = `/api/documents/${kind}/${id}?format=${format}`;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
   return (
     <DropdownMenu>

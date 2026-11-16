@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   deleteEducationAction,
@@ -43,7 +43,7 @@ function ExperienceDialog({ open, onOpenChange, item }: { open: boolean; onOpenC
     onSuccess: () => onOpenChange(false),
   });
   const e = form.formState.errors;
-  const isCurrent = form.watch("isCurrent");
+  const isCurrent = useWatch({ control: form.control, name: "isCurrent" });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Loader2, Save, Sparkles, Trash2 } from "lucide-react";
@@ -37,12 +37,15 @@ export function CoverLetterEditor({
   const [tone, setTone] = useState<CoverLetterTone>(initial.tone);
   const [saved, setSaved] = useState(initial);
 
-  useEffect(() => {
+  // Re-sync when the server sends a new version (e.g. after regenerating).
+  const [syncedKey, setSyncedKey] = useState(`${initial.version}:${initial.updatedAt}`);
+  if (syncedKey !== `${initial.version}:${initial.updatedAt}`) {
+    setSyncedKey(`${initial.version}:${initial.updatedAt}`);
     setTitle(initial.title);
     setContent(initial.content);
     setTone(initial.tone);
     setSaved(initial);
-  }, [initial]);
+  }
 
   const dirty = title !== saved.title || content !== saved.content || tone !== saved.tone;
   const save = useAction(saveCoverLetterAction, {

@@ -43,7 +43,6 @@ async function loadFontBytes() {
 
 /** Remove characters that can't be laid out (control chars) and normalise spaces. */
 function sanitise(text: string): string {
-  // eslint-disable-next-line no-control-regex
   return text.replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, "").replace(/\t/g, " ");
 }
 

@@ -65,7 +65,8 @@ export function SettingsView({
   const deleteForm = useForm<{ password: string; confirm: string }>({ defaultValues: { password: "", confirm: "" } });
   const deleteAction = useFormAction(deleteForm, deleteMyAccountAction, {
     onSuccess: () => {
-      window.location.href = "/?deleted=1";
+      router.replace("/?deleted=1");
+      router.refresh();
     },
   });
 

@@ -232,6 +232,9 @@ try {
   const card = page.locator('[aria-roledescription="Draggable application"]', { hasText: "Senior Web Developer" });
   await card.waitFor();
   const target = page.locator('section[aria-label="Applied column"]');
+  // Centre the target column first so dnd-kit's edge auto-scroll doesn't move the board mid-drag.
+  await target.evaluate((el) => el.scrollIntoView({ inline: "center", block: "nearest" }));
+  await card.evaluate((el) => el.scrollIntoView({ block: "nearest" }));
   const cb = await card.boundingBox();
   const tb = await target.boundingBox();
   await page.mouse.move(cb.x + 20, cb.y + 10);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -181,7 +181,11 @@ export function ApplicationsTracker({ items: initial }: { items: TrackerItem[] }
   const [, startTransition] = useTransition();
   const [query, setQuery] = useState(params.get("q") ?? "");
 
-  useEffect(() => setItems(initial), [initial]);
+  const [syncedInitial, setSyncedInitial] = useState(initial);
+  if (syncedInitial !== initial) {
+    setSyncedInitial(initial);
+    setItems(initial);
+  }
 
   const view = params.get("view") === "table" ? "table" : "board";
   const filterParam = params.get("filter");

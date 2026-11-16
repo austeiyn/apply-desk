@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -112,7 +112,12 @@ export function AppShell({
   const items = area === "admin" ? adminNav : candidateNav;
   const home = area === "admin" ? "/admin" : "/dashboard";
 
-  useEffect(() => setOpen(false), [pathname]);
+  // Close the mobile drawer whenever the route changes.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   const sidebar = (onNavigate?: () => void) => (
     <div className="flex h-full flex-col gap-4 p-3">

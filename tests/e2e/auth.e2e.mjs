@@ -69,13 +69,14 @@ try {
   await page.getByLabel("Email").fill(email);
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL((u) => u.pathname === "/dashboard");
+  await page.waitForURL((u) => u.pathname === "/dashboard" || u.pathname === "/onboarding");
   assert(new URL(page.url()).host === new URL(BASE_URL).host, "open redirect blocked");
   step("login works and blocks open redirects");
 
-  // Authenticated users visiting /login are sent to the dashboard.
+  // Authenticated users visiting /login are sent into the app (dashboard, or
+  // onboarding for this not-yet-onboarded user).
   await page.goto(`${BASE_URL}/login`);
-  await page.waitForURL((u) => u.pathname === "/dashboard");
+  await page.waitForURL((u) => u.pathname === "/dashboard" || u.pathname === "/onboarding");
   step("signed-in users skip the login page");
 
   // Password reset

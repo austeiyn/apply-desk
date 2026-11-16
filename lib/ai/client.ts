@@ -80,7 +80,9 @@ async function runStructured<S extends z.ZodType>(req: StructuredRequest<S>): Pr
   const anthropic = getAnthropic();
 
   try {
-    const response = await anthropic.beta.messages.parse({
+    // create() rather than parse(): parse() throws on non-JSON text before we
+    // can inspect stop_reason, which would hide refusals and truncation.
+    const response = await anthropic.beta.messages.create({
       model,
       max_tokens: req.maxTokens ?? 16_000,
       system: [{ type: "text", text: SYSTEM_PROMPT }],
@@ -121,9 +123,19 @@ async function runStructured<S extends z.ZodType>(req: StructuredRequest<S>): Pr
       throw new AiError("truncated");
     }
 
-    // parse() already validated against the schema; re-parse to apply
-    // transforms/refinements the JSON schema can't express.
-    const parsed = req.schema.safeParse(response.parsed_output);
+    const text = response.content
+      .filter((b): b is Extract<(typeof response.content)[number], { type: "text" }> => b.type === "text")
+      .map((b) => b.text)
+      .join("");
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      await recordAiUsage({ ...base, status: "error", errorCode: "invalid_json" });
+      throw new AiError("invalid_output");
+    }
+    // Validate (including refinements the JSON schema can't express).
+    const parsed = req.schema.safeParse(json);
     if (!parsed.success) {
       console.error(`[ai] ${req.feature} returned invalid output`, parsed.error.issues.slice(0, 5));
       await recordAiUsage({ ...base, status: "error", errorCode: "invalid_output" });
