@@ -73,3 +73,10 @@ export function check<T>(result: { data: T; error: unknown }): T {
   if (result.error) throw result.error;
   return result.data;
 }
+
+/** Like check(), but also asserts a row was returned (for insert(...).select().single()). */
+export function checkRow<R extends { data: unknown; error: unknown }>(result: R): NonNullable<R["data"]> {
+  if (result.error) throw result.error;
+  if (result.data === null || result.data === undefined) throw Object.assign(new Error("No row returned"), { code: "PGRST116" });
+  return result.data as NonNullable<R["data"]>;
+}
