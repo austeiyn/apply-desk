@@ -70,6 +70,11 @@ export async function assertAiAllowed(userId: string, opts: { dedupeKey?: string
   return async () => {};
 }
 
+/** Release the duplicate-request lock taken by assertAiAllowed (deferred runs). */
+export async function releaseAiDedupe(userId: string, dedupeKey: string | undefined): Promise<void> {
+  if (dedupeKey) await releaseRateLimit(`ai-dup:${userId}:${dedupeKey}`);
+}
+
 export interface UsageRecord {
   userId: string;
   feature: string;

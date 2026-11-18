@@ -22,12 +22,13 @@ export async function getCandidateBundle(
       .eq("user_id", userId)
       .order("is_current", { ascending: false })
       .order("start_date", { ascending: false, nullsFirst: false })
-      .order("sort_order"),
-    supabase.from("education").select("*").eq("user_id", userId).order("graduation_date", { ascending: false, nullsFirst: true }),
-    supabase.from("skills").select("*").eq("user_id", userId).order("skill_category").order("skill_name"),
-    supabase.from("certifications").select("*").eq("user_id", userId).order("issue_date", { ascending: false, nullsFirst: false }),
-    supabase.from("projects").select("*").eq("user_id", userId).order("start_date", { ascending: false, nullsFirst: false }),
-    supabase.from("profile_extras").select("*").eq("user_id", userId).order("kind").order("date", { ascending: false, nullsFirst: false }),
+      .order("sort_order")
+      .order("id"),
+    supabase.from("education").select("*").eq("user_id", userId).order("graduation_date", { ascending: false, nullsFirst: true }).order("id"),
+    supabase.from("skills").select("*").eq("user_id", userId).order("skill_category").order("skill_name").order("id"),
+    supabase.from("certifications").select("*").eq("user_id", userId).order("issue_date", { ascending: false, nullsFirst: false }).order("id"),
+    supabase.from("projects").select("*").eq("user_id", userId).order("start_date", { ascending: false, nullsFirst: false }).order("id"),
+    supabase.from("profile_extras").select("*").eq("user_id", userId).order("kind").order("date", { ascending: false, nullsFirst: false }).order("id"),
   ]);
 
   if (!p.data || !candidate.data) {

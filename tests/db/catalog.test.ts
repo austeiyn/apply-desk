@@ -54,6 +54,16 @@ run("database security invariants", () => {
     expect(rows).toEqual([]);
   });
 
+  it("keeps AI run hand-offs (prompt data) service-role only", async () => {
+    const { rows } = await client.query(
+      `select grantee, privilege_type from information_schema.role_table_grants
+        where table_schema = 'public' and table_name = 'ai_runs' and grantee in ('anon', 'authenticated', 'public')`,
+    );
+    expect(rows).toEqual([]);
+    const { rows: policies } = await client.query(`select policyname from pg_policies where schemaname = 'public' and tablename = 'ai_runs'`);
+    expect(policies).toEqual([]);
+  });
+
   it("keeps the CV bucket private with type and size limits", async () => {
     const { rows } = await client.query(`select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'source-cvs'`);
     expect(rows[0]).toMatchObject({ public: false, file_size_limit: "10485760" });

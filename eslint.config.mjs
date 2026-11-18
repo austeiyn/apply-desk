@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Netlify edge functions run on Deno and are type-checked there.
+    "netlify/**",
   ]),
 ]);
 

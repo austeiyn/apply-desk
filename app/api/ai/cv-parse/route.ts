@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { extractCvProfile } from "@/lib/ai/cv-extractor";
 import { AiError } from "@/lib/ai/errors";
-import { assertSameOrigin, jsonError, streamJob } from "@/lib/ai/stream";
+import { assertSameOrigin, jsonError, readAiRunId, streamJob } from "@/lib/ai/stream";
 import { AuthorizationError, requireActiveUserForAction } from "@/lib/auth/session";
 
 const bodySchema = z.object({ cvId: z.uuid() });
@@ -14,7 +14,9 @@ export async function POST(request: Request) {
   } catch (e) {
     return jsonError(e instanceof AuthorizationError ? e.message : "Unauthorized", 401);
   }
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const raw: unknown = await request.json().catch(() => null);
+  const aiRunId = readAiRunId(raw);
+  const parsed = bodySchema.safeParse(raw);
   if (!parsed.success) return jsonError("Invalid request.", 400);
 
   const { supabase, userId } = session;
@@ -54,5 +56,5 @@ export async function POST(request: Request) {
       }
       throw error;
     }
-  });
+  }, { aiRunId });
 }

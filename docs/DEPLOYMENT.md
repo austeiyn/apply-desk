@@ -102,13 +102,17 @@ Sign out and back in, and open `/admin`. See [ADMIN.md](ADMIN.md).
 - [ ] Admin → Platform Settings: set AI limits and a support email.
 - [ ] Replace the bracketed placeholders in `/privacy` and `/terms` after legal review.
 
-## Function time limits and AI generation
+## How AI requests run on Netlify
 
-AI routes stream progress events while Claude works, which keeps proxies and browsers from closing idle connections. The total generation time must still fit within your Netlify plan's **function execution limit**; check Netlify's current documentation for your plan. Typical generations take 20–60 seconds. If you see timeouts:
+Netlify serverless functions stop after about 30 seconds, and most AI generations take longer. ApplyDesk therefore splits each AI request into three steps, which the browser drives automatically:
 
-1. set `ANTHROPIC_FAST_MODE=true` (supported on `claude-opus-5-5`), and/or
-2. set `ANTHROPIC_MODEL` to a faster model (e.g. `claude-sonnet-5-5`), and/or
-3. upgrade the Netlify plan or move generation to background functions.
+1. **Prepare** (Next.js route, serverless): checks the user, quota and rate limits, builds the prompt, stores it in the `ai_runs` table and returns a one-time ticket.
+2. **Wait for Claude** (edge function `netlify/edge-functions/ai-run.ts` at `/api/ai-run`): claims the ticket, calls Claude and stores the raw reply. Edge functions only need to start responding within about 40 seconds and can then keep streaming, so long generations are fine. They read `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, which must include the **Functions** scope (the default).
+3. **Finish** (the same Next.js route again): validates the reply, applies the integrity rules, saves the result and deletes the stored prompt.
+
+`ai_runs` is only accessible to the service role; rows are deleted when used and abandoned ones after an hour. On a host without a function time limit you can set `AI_RUNNER=inline` to call Claude directly from the route instead.
+
+**Upgrading an existing project:** run any new files in `supabase/migrations/` (for example `20261118000100_ai_runs.sql`) in the SQL editor, in filename order, before or right after deploying.
 
 ## Troubleshooting
 
@@ -118,6 +122,8 @@ AI routes stream progress events while Claude works, which keeps proxies and bro
 | Email links go to `localhost` | Supabase **Site URL** still points at localhost. |
 | "Link invalid or expired" after clicking a verification email | Redirect URL not allow-listed, or the email template link wasn't updated. |
 | AI features show "aren't configured" | `ANTHROPIC_API_KEY` missing; redeploy after adding it. |
+| AI requests fail with "Something went wrong" right away after an upgrade | A new migration (e.g. `ai_runs`) hasn't been run in Supabase yet. |
+| "The connection ended before the AI finished" | The edge function didn't deploy or can't read its environment variables; check Netlify → Logs → Edge Functions. |
 | "AI usage metering isn't configured" | `SUPABASE_SERVICE_ROLE_KEY` missing. |
 | CV upload fails in the browser | `NEXT_PUBLIC_SUPABASE_URL` changed without a redeploy (the CSP still allows the old origin). |
 | Admin console returns 404 | The account isn't an admin, or you need to sign out and in again after granting the role. |

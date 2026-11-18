@@ -3,7 +3,7 @@
 // lock, audit log) and candidate account settings (export, deletion).
 import { createRequire } from "node:module";
 import { chromium } from "playwright";
-import { assert, BASE_URL, resetRateLimits, uniqueEmail } from "./helpers.mjs";
+import { assert, BASE_URL, callAiRoute, resetRateLimits, uniqueEmail } from "./helpers.mjs";
 import { startMockAnthropic } from "./mock-anthropic.mjs";
 
 const require = createRequire(import.meta.url);
@@ -164,12 +164,11 @@ try {
   await adminPage.getByLabel("Requests per user per day").fill("1");
   await adminPage.getByRole("button", { name: "Save settings" }).click();
   await waitForSetting("ai_daily_request_limit", 1);
-  const call = () =>
-    c.page.request.post(`${BASE_URL}/api/ai/analyse`, { headers: { origin: BASE_URL, "content-type": "application/json" }, data: { applicationId: app.id } });
+  const call = () => callAiRoute(c.page.request, "/api/ai/analyse", { applicationId: app.id });
   await admin.from("work_experiences").insert({ user_id: cand.id, company: "Acme", job_title: "Tester" });
-  const first = await (await call()).text();
+  const first = await call();
   assert(first.includes('"type":"result"'), `first AI call allowed: ${first.slice(-200)}`);
-  const second = await (await call()).text();
+  const second = await call();
   assert(second.includes("today's AI usage limit"), `second AI call blocked by daily limit: ${second.slice(-160)}`);
   await adminPage.reload({ waitUntil: "networkidle" });
   await adminPage.getByLabel("Requests per user per day").fill("40");

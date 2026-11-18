@@ -23,7 +23,27 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "ai_usage": {
+            "ai_runs": {
+                  Row: {
+                    "created_at": string,"error_code": string | null,"error_message": string | null,"expires_at": string,"feature": string,"finished_at": string | null,"id": string,"request": NonNullable<Json>,"request_hash": string,"response": Json | null,"started_at": string | null,"status": string,"token_hash": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"error_code"?: string | null,"error_message"?: string | null,"expires_at"?: string,"feature": string,"finished_at"?: string | null,"id"?: string,"request": NonNullable<Json>,"request_hash": string,"response"?: Json | null,"started_at"?: string | null,"status"?: string,"token_hash": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"error_code"?: string | null,"error_message"?: string | null,"expires_at"?: string,"feature"?: string,"finished_at"?: string | null,"id"?: string,"request"?: NonNullable<Json>,"request_hash"?: string,"response"?: Json | null,"started_at"?: string | null,"status"?: string,"token_hash"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_runs_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ai_usage": {
                   Row: {
                     "cache_read_tokens": number,"created_at": string,"duration_ms": number | null,"error_code": string | null,"feature": string,"id": string,"input_tokens": number,"model": string | null,"output_tokens": number,"status": string,"user_id": string | null
                   }

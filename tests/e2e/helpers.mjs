@@ -67,3 +67,26 @@ export async function resetRateLimits(adminClient) {
   const { error } = await adminClient.from("rate_limits").delete().neq("key", "");
   if (error) throw new Error(`could not reset rate limits: ${error.message}`);
 }
+
+/**
+ * Call an AI route the way the browser hook does: if the route hands its model
+ * call to the edge runner ("defer"), wait at /api/ai-run, then repeat the
+ * request with the run id. Returns the final NDJSON text of the route.
+ */
+export async function callAiRoute(request, path, data) {
+  const headers = { origin: BASE_URL, "content-type": "application/json" };
+  let payload = data;
+  for (let step = 0; step < 4; step++) {
+    const text = await (await request.post(`${BASE_URL}${path}`, { headers, data: payload })).text();
+    const defer = text
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l))
+      .find((e) => e.type === "defer");
+    if (!defer) return text;
+    const waited = await (await request.post(`${BASE_URL}/api/ai-run`, { headers, data: { runId: defer.runId, token: defer.token } })).text();
+    if (!waited.includes('"type":"done"')) return waited;
+    payload = { ...data, aiRunId: defer.runId };
+  }
+  throw new Error("AI route kept deferring");
+}
