@@ -17,7 +17,7 @@ export function JobDetailsFields({ form }: { form: UseFormReturn<JobDetailsInput
           <CardTitle>Role details</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="Job title" htmlFor="jobTitle" error={e.jobTitle?.message} required>
+          <Field label="Job title" htmlFor="jobTitle" error={e.jobTitle?.message} description="Leave blank if you paste the full description; we'll fill it in.">
             <Input id="jobTitle" {...r("jobTitle")} aria-invalid={!!e.jobTitle} />
           </Field>
           <Field label="Company name" htmlFor="companyName" error={e.companyName?.message}>

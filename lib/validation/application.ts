@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { APPLICATION_STATUSES } from "@/lib/constants";
-import { longText, optionalDate, optionalEmail, optionalText, requiredText } from "./common";
+import { longText, optionalDate, optionalEmail, optionalText } from "./common";
 
 const jobUrl = z
   .string()
@@ -20,10 +20,14 @@ const jobUrl = z
     }
   });
 
-export const jobDetailsSchema = z.object({
+/** Stored when the title is left blank; job analysis replaces it with the advertised title. */
+export const UNTITLED_JOB = "Untitled role";
+
+export const jobDetailsSchema = z
+  .object({
   jobUrl,
   source: z.enum(["url", "manual"]).default("manual"),
-  jobTitle: requiredText(300, "Enter the job title."),
+  jobTitle: optionalText(300),
   companyName: optionalText(300).transform((v) => v ?? ""),
   location: optionalText(300),
   employmentType: optionalText(100),
@@ -34,7 +38,15 @@ export const jobDetailsSchema = z.object({
   requiredQualifications: longText(20000),
   requiredSkills: longText(20000),
   preferredQualifications: longText(20000),
-});
+  })
+  // The title may be left blank when the advertisement text is pasted: the
+  // analysis reads it from the description (see app/api/ai/analyse).
+  .superRefine((v, ctx) => {
+    if (!v.jobTitle && v.jobDescription.length < 80) {
+      ctx.addIssue({ code: "custom", path: ["jobTitle"], message: "Enter the job title, or paste the full job description below and we'll fill it in." });
+    }
+  })
+  .transform((v) => ({ ...v, jobTitle: v.jobTitle ?? UNTITLED_JOB }));
 
 export const trackingSchema = z.object({
   applicationStatus: z.enum(APPLICATION_STATUSES),

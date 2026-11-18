@@ -147,6 +147,12 @@ export function NewApplicationForm({ aiConfigured }: { aiConfigured: boolean }) 
           {importState ? (
             <Alert variant={importState.kind === "success" ? "success" : importState.kind === "fallback" ? "warning" : "error"}>{importState.message}</Alert>
           ) : null}
+          {importState?.kind === "fallback" ? (
+            <p className="text-xs text-muted-foreground">
+              Tip: open the advertisement, select all of its text (Ctrl+A or ⌘A), copy it and paste it into <strong>Job description</strong>. You can leave the
+              other fields blank; the analysis fills in the title, company, location and requirements.
+            </p>
+          ) : null}
           {!showForm ? (
             <div className="flex items-center gap-3 pt-1">
               <span className="h-px flex-1 bg-border" />

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { analyseJob } from "@/lib/ai/job-analyser";
 import { handleAiRoute } from "@/lib/ai/route";
 import { loadApplicationForAi } from "@/lib/data/applications";
+import { UNTITLED_JOB } from "@/lib/validation/application";
 
 const body = z.object({ applicationId: z.uuid() });
 
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     const update = {
       job_analysis: analysis as unknown as never,
       analysis_updated_at: new Date().toISOString(),
+      ...(application.job_title === UNTITLED_JOB && j.job_title?.trim() ? { job_title: j.job_title.trim().slice(0, 300) } : {}),
       ...(!application.company_name && j.company_name ? { company_name: j.company_name.slice(0, 300) } : {}),
       ...(!application.location && j.location ? { location: j.location.slice(0, 300) } : {}),
       ...(!application.employment_type && j.employment_type ? { employment_type: j.employment_type.slice(0, 100) } : {}),

@@ -31,7 +31,7 @@ const intruder = await makeUser("e2e-runner-other");
 await admin.from("work_experiences").insert({ user_id: owner.id, company: "Acme", job_title: "Web Developer", start_date: "2020-01-01", is_current: true, technologies: [] });
 const { data: app, error: appError } = await admin
   .from("job_applications")
-  .insert({ user_id: owner.id, job_title: "Senior Web Developer", company_name: "Example Ltd", job_description:
+  .insert({ user_id: owner.id, job_title: "Untitled role", company_name: "Example Ltd", job_description:
       "We're looking for a Senior Web Developer to build accessible WordPress sites for public-sector clients. You'll champion WCAG 2.1, mentor developers and work closely with clients. Required: 5+ years of PHP and JavaScript, strong WordPress theme development. Nice to have: React." })
   .select("id")
   .single();
@@ -96,6 +96,8 @@ try {
   assert(done.some((e) => e.type === "result"), `owner completes the request: ${JSON.stringify(done.at(-1))}`);
   const { data: saved } = await admin.from("job_applications").select("job_analysis").eq("id", app.id).single();
   assert(saved.job_analysis, "analysis saved");
+  const { data: titled } = await admin.from("job_applications").select("job_title").eq("id", app.id).single();
+  assert(titled.job_title !== "Untitled role" && titled.job_title.length > 0, `blank title filled from the advertisement (got ${titled.job_title})`);
   const { data: leftover } = await admin.from("ai_runs").select("id").eq("id", defer.runId);
   assert(leftover.length === 0, "prompt data deleted after the result is saved");
   const { data: usage } = await admin.from("ai_usage").select("status").eq("user_id", owner.id);
