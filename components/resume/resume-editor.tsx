@@ -20,6 +20,7 @@ import { toast } from "@/components/ui/sonner";
 import { ResumeContentSchema, SECTION_HEADINGS, type ResumeContent, type SectionKey } from "@/lib/resume/types";
 import { cn, relativeTime } from "@/lib/utils";
 import { ResumePreview } from "./resume-preview";
+import { StylePicker } from "./style-picker";
 import {
   AdditionalEditor,
   CertificationsEditor,
@@ -333,8 +334,9 @@ export function ResumeEditor({
             view === "edit" && "hidden lg:block",
           )}
         >
-          <p className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Info className="size-3.5" /> Live preview. Downloads use the same single-column, ATS-friendly layout.
+          <StylePicker value={content.style} onChange={(style) => update((c) => ({ ...c, style }))} />
+          <p className="mb-3 mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Info className="size-3.5" /> Live preview. Every template is single-column and ATS-friendly; downloads match this preview.
           </p>
           <ResumePreview content={content} />
           {!dirty ? null : (

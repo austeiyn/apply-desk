@@ -13,23 +13,28 @@ import {
 } from "docx";
 import type { ResumeContent } from "@/lib/resume/types";
 import { coverLetterParagraphs, resumeBlocks, type LetterHeader } from "./layout";
+import { DOCX_FONT, INK_HEX, MUTED_HEX, resolveStyle, RULE_HEX, SUBTLE_HEX, TEMPLATE_SPECS, type TemplateSpec } from "./templates";
 
-// A4 in twentieths of a point; 0.6" margins.
-const PAGE = { width: 11906, height: 16838, margin: 864 };
-const CONTENT_WIDTH = PAGE.width - PAGE.margin * 2;
-// Liberation Sans (used for PDFs) is metric-compatible with Arial, so DOCX and PDF match.
-const FONT = "Arial";
-const INK = "111827";
-const MUTED = "4B5563";
+// A4 in twentieths of a point (twips). Margins, sizes and spacing come from
+// the template spec, in points. Liberation Sans/Serif (used for PDFs) are
+// metric-compatible with Arial/Times New Roman, so DOCX and PDF match.
+const PAGE = { width: 11906, height: 16838 };
+const hex = (h: string) => h.replace("#", "").toUpperCase();
+const INK = hex(INK_HEX);
+const MUTED = hex(MUTED_HEX);
+const SUBTLE = hex(SUBTLE_HEX);
 
-const pt = (n: number) => Math.round(n * 2); // docx sizes are half-points
+const pt = (n: number) => Math.round(n * 2); // docx font sizes are half-points
+const tw = (n: number) => Math.round(n * 20); // spacing in twentieths of a point
+const lineRule = (multiple: number) => Math.round(240 * (multiple - 0.2)); // 240 = single spacing
 
-function baseDocument(sections: Paragraph[], meta: { title: string; author: string }) {
+function baseDocument(sections: Paragraph[], meta: { title: string; author: string }, spec: TemplateSpec) {
+  const margin = tw(spec.margin);
   return new Document({
     title: meta.title,
     creator: meta.author,
     description: "Created with ApplyDesk",
-    styles: { default: { document: { run: { font: FONT, size: pt(10), color: INK } } } },
+    styles: { default: { document: { run: { font: DOCX_FONT[spec.font], size: pt(spec.size.body), color: INK } } } },
     numbering: {
       config: [
         {
@@ -48,7 +53,7 @@ function baseDocument(sections: Paragraph[], meta: { title: string; author: stri
     },
     sections: [
       {
-        properties: { page: { size: { width: PAGE.width, height: PAGE.height }, margin: { top: PAGE.margin, bottom: PAGE.margin, left: PAGE.margin, right: PAGE.margin } } },
+        properties: { page: { size: { width: PAGE.width, height: PAGE.height }, margin: { top: margin, bottom: margin, left: margin, right: margin } } },
         children: sections,
       },
     ],
@@ -56,48 +61,75 @@ function baseDocument(sections: Paragraph[], meta: { title: string; author: stri
 }
 
 export async function renderResumeDocx(content: ResumeContent, title: string): Promise<Buffer> {
+  const { spec, accentHex } = resolveStyle(content.style);
+  const accent = hex(accentHex);
+  const contentWidth = PAGE.width - tw(spec.margin) * 2;
+  const headerAlign = spec.headerAlign === "center" ? AlignmentType.CENTER : AlignmentType.LEFT;
   const paragraphs: Paragraph[] = [];
-  const blocks = resumeBlocks(content);
 
-  for (const b of blocks) {
+  for (const b of resumeBlocks(content)) {
     switch (b.type) {
       case "name":
-        paragraphs.push(new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: b.text, bold: true, size: pt(18) })] }));
+        paragraphs.push(
+          new Paragraph({ alignment: headerAlign, spacing: { after: 40 }, children: [new TextRun({ text: b.text, bold: true, size: pt(spec.size.name), color: accent })] }),
+        );
         break;
       case "headline":
-        paragraphs.push(new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: b.text, size: pt(11), color: "1F2937" })] }));
+        paragraphs.push(new Paragraph({ alignment: headerAlign, spacing: { after: 40 }, children: [new TextRun({ text: b.text, size: pt(spec.size.headline), color: SUBTLE })] }));
         break;
       case "contact":
-        paragraphs.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: b.text, size: pt(9.5), color: MUTED })] }));
+        paragraphs.push(new Paragraph({ alignment: headerAlign, spacing: { after: 120 }, children: [new TextRun({ text: b.text, size: pt(spec.size.contact), color: MUTED })] }));
         break;
-      case "heading":
+      case "heading": {
+        const { heading } = spec;
         paragraphs.push(
           new Paragraph({
-            spacing: { before: 200, after: 80 },
+            spacing: { before: tw(spec.spacing.section + 2), after: 80 },
             keepNext: true,
-            border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "9CA3AF", space: 2 } },
-            children: [new TextRun({ text: b.text.toUpperCase(), bold: true, size: pt(10.5), characterSpacing: 10 })],
+            ...(heading.rule === "none"
+              ? {}
+              : {
+                  border: {
+                    bottom: { style: BorderStyle.SINGLE, size: Math.max(2, Math.round(heading.ruleWeight * 8)), color: heading.rule === "accent" ? accent : hex(RULE_HEX), space: 2 },
+                  },
+                }),
+            children: [
+              new TextRun({
+                text: heading.uppercase ? b.text.toUpperCase() : b.text,
+                bold: true,
+                size: pt(spec.size.heading),
+                color: accent,
+                ...(heading.tracking ? { characterSpacing: tw(heading.tracking) } : {}),
+              }),
+            ],
           }),
         );
         break;
+      }
       case "paragraph":
-        paragraphs.push(new Paragraph({ spacing: { after: 60, line: 264 }, children: [new TextRun({ text: b.text })] }));
+        paragraphs.push(new Paragraph({ spacing: { after: 60, line: lineRule(spec.spacing.line) }, children: [new TextRun({ text: b.text })] }));
         break;
       case "entry": {
         const opts: IParagraphOptions = {
-          spacing: { before: 100, after: 20 },
+          spacing: { before: tw(spec.spacing.entry), after: 20 },
           keepNext: true,
-          tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_WIDTH }],
+          tabStops: [{ type: TabStopType.RIGHT, position: contentWidth }],
           children: [new TextRun({ text: b.title, bold: true }), ...(b.dates ? [new TextRun({ text: `\t${b.dates}`, color: MUTED })] : [])],
         };
         paragraphs.push(new Paragraph(opts));
         if (b.subtitle) {
-          paragraphs.push(new Paragraph({ spacing: { after: 40 }, keepNext: true, children: [new TextRun({ text: b.subtitle, italics: true, color: "374151" })] }));
+          paragraphs.push(new Paragraph({ spacing: { after: 40 }, keepNext: true, children: [new TextRun({ text: b.subtitle, italics: spec.subtitleItalic, color: SUBTLE })] }));
         }
         break;
       }
       case "bullet":
-        paragraphs.push(new Paragraph({ numbering: { reference: "ad-bullets", level: 0 }, spacing: { after: 30, line: 259 }, children: [new TextRun({ text: b.text })] }));
+        paragraphs.push(
+          new Paragraph({
+            numbering: { reference: "ad-bullets", level: 0 },
+            spacing: { after: tw(spec.spacing.bullet + 0.5), line: lineRule(spec.spacing.line - 0.02) },
+            children: [new TextRun({ text: b.text })],
+          }),
+        );
         break;
       case "spacer":
         paragraphs.push(new Paragraph({ children: [] }));
@@ -105,7 +137,7 @@ export async function renderResumeDocx(content: ResumeContent, title: string): P
     }
   }
 
-  return Packer.toBuffer(baseDocument(paragraphs, { title, author: content.contact.full_name }));
+  return Packer.toBuffer(baseDocument(paragraphs, { title, author: content.contact.full_name }, spec));
 }
 
 export async function renderCoverLetterDocx(content: string, header: LetterHeader, title: string): Promise<Buffer> {
@@ -124,5 +156,5 @@ export async function renderCoverLetterDocx(content: string, header: LetterHeade
       }),
     );
   }
-  return Packer.toBuffer(baseDocument(paragraphs, { title, author: header.fullName }));
+  return Packer.toBuffer(baseDocument(paragraphs, { title, author: header.fullName }, TEMPLATE_SPECS.classic));
 }

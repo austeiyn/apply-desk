@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import mammoth from "mammoth";
+import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { extractText, getDocumentProxy } from "unpdf";
 import { buildCandidateContext } from "@/lib/ai/prompts";
 import { renderCoverLetterDocx, renderResumeDocx } from "@/lib/documents/docx";
 import { renderCoverLetterPdf, renderResumePdf } from "@/lib/documents/pdf";
+import { ACCENT_HEX, DOCX_FONT, RESUME_TEMPLATES, resolveStyle, TEMPLATE_SPECS } from "@/lib/documents/templates";
 import { assembleResume } from "@/lib/resume/assemble";
 import { sampleBundle } from "../support/bundle";
 
@@ -30,6 +32,25 @@ const content = assembleResume({
   application: { id: "a", job_title: "Senior Web Developer", company_name: "Harbour & Co" },
   model: "test",
 });
+
+/** BaseFont names of the fonts embedded in a PDF. */
+async function pdfFontNames(bytes: Uint8Array): Promise<string[]> {
+  const doc = await PDFDocument.load(bytes);
+  const names: string[] = [];
+  for (const [, obj] of doc.context.enumerateIndirectObjects()) {
+    if (!(obj instanceof PDFDict) || obj.get(PDFName.of("Type")) !== PDFName.of("Font")) continue;
+    const base = obj.get(PDFName.of("BaseFont"));
+    if (base instanceof PDFName && obj.get(PDFName.of("Subtype")) === PDFName.of("Type0")) names.push(base.decodeText());
+  }
+  return names;
+}
+
+/** word/document.xml from a DOCX (zip) buffer. */
+async function docxXml(buffer: Buffer): Promise<string> {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(buffer);
+  return (await zip.file("word/document.xml")!.async("string")) + (await zip.file("word/styles.xml")!.async("string"));
+}
 
 async function pdfText(bytes: Uint8Array) {
   const pdf = await getDocumentProxy(new Uint8Array(bytes));
@@ -75,6 +96,58 @@ describe("resume DOCX", () => {
     expect(xml).not.toContain("<w:tbl>");
     expect(xml).not.toContain("<w:txbxContent>");
     expect(Object.keys(zip.files).some((f) => /word\/(header|footer)\d*\.xml/.test(f))).toBe(false);
+  });
+});
+
+describe("resume templates", () => {
+  const styled = (template: (typeof RESUME_TEMPLATES)[number], accent?: "navy" | "burgundy") => ({ ...content, style: { template, ...(accent ? { accent } : {}) } });
+
+  for (const template of RESUME_TEMPLATES) {
+    it(`${template}: PDF keeps whole-word, machine-readable headings and every entry`, async () => {
+      const { text, pages } = await pdfText(await renderResumePdf(styled(template), "Resume"));
+      const heading = (h: string) => (TEMPLATE_SPECS[template].heading.uppercase ? h.toUpperCase() : h);
+      // Letter-spaced headings must still extract as words (ATS parsing).
+      for (const h of ["Professional Summary", "Core Skills", "Professional Experience", "Education"]) expect(text).toContain(heading(h));
+      for (const expected of ["Aroha Ngata", "Kōwhai Digital", "Tūī Interactive", "te reo Māori", "Mar 2020 – Present"]) expect(text).toContain(expected);
+      expect(pages).toBeLessThanOrEqual(2);
+    });
+
+    it(`${template}: DOCX uses the template's font and keeps the content`, async () => {
+      const buffer = await renderResumeDocx(styled(template, "burgundy"), "Resume");
+      const { value } = await mammoth.extractRawText({ buffer });
+      expect(value).toContain("Kōwhai Digital");
+      const xml = await docxXml(buffer);
+      expect(xml).toContain(DOCX_FONT[TEMPLATE_SPECS[template].font]);
+      expect(xml).toContain(ACCENT_HEX.burgundy.slice(1));
+    });
+  }
+
+  it("embeds the serif font for Executive and the sans font otherwise", async () => {
+    const executive = await pdfFontNames(await renderResumePdf(styled("executive"), "Resume"));
+    const classic = await pdfFontNames(await renderResumePdf(content, "Resume"));
+    expect(executive.every((f) => f.includes("LiberationSerif"))).toBe(true);
+    expect(classic.every((f) => f.includes("LiberationSans"))).toBe(true);
+    expect(classic.length).toBeGreaterThan(0);
+  });
+
+  it("keeps heading letter-spacing narrow enough for ATS text extraction", () => {
+    for (const t of RESUME_TEMPLATES) {
+      const { heading, size } = TEMPLATE_SPECS[t];
+      expect(heading.tracking, t).toBeLessThanOrEqual(size.heading * 0.06);
+    }
+  });
+
+  it("Compact fits more on a page than Executive", async () => {
+    const long = { ...content, experience: Array.from({ length: 8 }, (_, i) => ({ ...content.experience[0]!, id: `exp_${i}`, bullets: longBullets.slice(0, 8) })) };
+    const compact = await pdfText(await renderResumePdf({ ...long, style: { template: "compact" } }, "Resume"));
+    const executive = await pdfText(await renderResumePdf({ ...long, style: { template: "executive" } }, "Resume"));
+    expect(compact.pages).toBeLessThan(executive.pages);
+  });
+
+  it("falls back to Classic with its default colour for resumes saved before styles existed", () => {
+    expect(resolveStyle(undefined)).toMatchObject({ template: "classic", accent: "charcoal" });
+    expect(resolveStyle({ template: "modern" })).toMatchObject({ template: "modern", accent: "teal" });
+    expect(resolveStyle({ template: "nope" as never, accent: "nope" as never })).toMatchObject({ template: "classic", accent: "charcoal" });
   });
 });
 

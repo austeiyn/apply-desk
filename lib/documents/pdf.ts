@@ -3,17 +3,22 @@ import "server-only";
 import fs from "node:fs/promises";
 import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
-import { PDFDocument, rgb, type PDFFont, type PDFPage, type RGB } from "pdf-lib";
+import { PDFDocument, rgb, setCharacterSpacing, type PDFFont, type PDFPage, type RGB } from "pdf-lib";
 import type { ResumeContent } from "@/lib/resume/types";
 import { coverLetterParagraphs, resumeBlocks, type LetterHeader } from "./layout";
+import { MUTED_HEX, resolveStyle, RULE_HEX, SUBTLE_HEX, TEMPLATE_SPECS, type TemplateSpec } from "./templates";
 
-// A4 in points; 0.6" margins.
+// A4 in points. Margins, sizes and spacing come from the template spec.
 const A4 = { width: 595.28, height: 841.89 };
-const MARGIN = 43;
-const CONTENT_WIDTH = A4.width - MARGIN * 2;
+
+function hexToRgb(hex: string): RGB {
+  const n = Number.parseInt(hex.replace("#", ""), 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
 const INK = rgb(0.067, 0.094, 0.153);
-const MUTED = rgb(0.294, 0.333, 0.388);
-const RULE = rgb(0.612, 0.639, 0.686);
+const MUTED = hexToRgb(MUTED_HEX);
+const SUBTLE = hexToRgb(SUBTLE_HEX);
+const RULE = hexToRgb(RULE_HEX);
 
 interface Fonts {
   regular: PDFFont;
@@ -26,19 +31,24 @@ interface Fonts {
 // visible gaps and can be dropped from font subsets.
 const NO_LIGATURES = { liga: false, clig: false, dlig: false, calt: false, rlig: false };
 
-let fontBytes: { regular: Uint8Array; bold: Uint8Array; italic: Uint8Array } | null = null;
+type FontFamily = TemplateSpec["font"];
+const FONT_FILES: Record<FontFamily, string> = { sans: "LiberationSans", serif: "LiberationSerif" };
+const fontBytes = new Map<FontFamily, { regular: Uint8Array; bold: Uint8Array; italic: Uint8Array }>();
 
-async function loadFontBytes() {
-  if (!fontBytes) {
+async function loadFontBytes(family: FontFamily) {
+  let bytes = fontBytes.get(family);
+  if (!bytes) {
     const dir = path.join(process.cwd(), "lib", "documents", "fonts");
+    const base = FONT_FILES[family];
     const [regular, bold, italic] = await Promise.all([
-      fs.readFile(path.join(dir, "LiberationSans-Regular.ttf")),
-      fs.readFile(path.join(dir, "LiberationSans-Bold.ttf")),
-      fs.readFile(path.join(dir, "LiberationSans-Italic.ttf")),
+      fs.readFile(path.join(dir, `${base}-Regular.ttf`)),
+      fs.readFile(path.join(dir, `${base}-Bold.ttf`)),
+      fs.readFile(path.join(dir, `${base}-Italic.ttf`)),
     ]);
-    fontBytes = { regular, bold, italic };
+    bytes = { regular, bold, italic };
+    fontBytes.set(family, bytes);
   }
-  return fontBytes;
+  return bytes;
 }
 
 /** Remove characters that can't be laid out (control chars) and normalise spaces. */
@@ -54,21 +64,27 @@ function sanitise(text: string): string {
 class PdfWriter {
   page!: PDFPage;
   y = 0;
+  readonly margin: number;
+  readonly width: number;
 
   constructor(
     readonly doc: PDFDocument,
     readonly fonts: Fonts,
+    readonly spec: TemplateSpec,
+    readonly accent: RGB,
   ) {
+    this.margin = spec.margin;
+    this.width = A4.width - spec.margin * 2;
     this.newPage();
   }
 
   newPage() {
     this.page = this.doc.addPage([A4.width, A4.height]);
-    this.y = A4.height - MARGIN;
+    this.y = A4.height - this.margin;
   }
 
   ensure(height: number) {
-    if (this.y - height < MARGIN) this.newPage();
+    if (this.y - height < this.margin) this.newPage();
   }
 
   wrap(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
@@ -103,73 +119,97 @@ class PdfWriter {
 
   text(
     text: string,
-    opts: { font?: PDFFont; size?: number; color?: RGB; indent?: number; lineGap?: number; before?: number; after?: number; keepWith?: number } = {},
+    opts: {
+      font?: PDFFont;
+      size?: number;
+      color?: RGB;
+      indent?: number;
+      lineGap?: number;
+      before?: number;
+      after?: number;
+      keepWith?: number;
+      align?: "left" | "center";
+    } = {},
   ) {
     const font = opts.font ?? this.fonts.regular;
-    const size = opts.size ?? 10;
-    const lineHeight = size * 1.28 + (opts.lineGap ?? 0);
+    const size = opts.size ?? this.spec.size.body;
+    const lineHeight = size * this.spec.spacing.line + (opts.lineGap ?? 0);
     const indent = opts.indent ?? 0;
-    const lines = this.wrap(text, font, size, CONTENT_WIDTH - indent);
+    const lines = this.wrap(text, font, size, this.width - indent);
     this.y -= opts.before ?? 0;
     this.ensure(lineHeight * Math.min(lines.length, 2) + (opts.keepWith ?? 0));
     for (const line of lines) {
       this.ensure(lineHeight);
       this.y -= size;
-      this.page.drawText(line, { x: MARGIN + indent, y: this.y, size, font, color: opts.color ?? INK });
+      const x = opts.align === "center" ? this.margin + (this.width - font.widthOfTextAtSize(line, size)) / 2 : this.margin + indent;
+      this.page.drawText(line, { x, y: this.y, size, font, color: opts.color ?? INK });
       this.y -= lineHeight - size;
     }
     this.y -= opts.after ?? 0;
   }
 
   heading(text: string) {
-    const size = 10.5;
-    this.y -= 9;
+    const { heading, size: sizes, spacing } = this.spec;
+    const size = sizes.heading;
+    const label = heading.uppercase ? sanitise(text).toUpperCase() : sanitise(text);
+    this.y -= spacing.section;
     this.ensure(size + 40);
     this.y -= size;
-    this.page.drawText(sanitise(text).toUpperCase(), { x: MARGIN, y: this.y, size, font: this.fonts.bold, color: INK });
+    // Letter spacing uses the PDF character-spacing operator (Tc), so text
+    // extraction (and ATS parsing) still sees whole words.
+    if (heading.tracking) this.page.pushOperators(setCharacterSpacing(heading.tracking));
+    this.page.drawText(label, { x: this.margin, y: this.y, size, font: this.fonts.bold, color: this.accent });
+    if (heading.tracking) this.page.pushOperators(setCharacterSpacing(0));
     this.y -= 4;
-    this.page.drawLine({ start: { x: MARGIN, y: this.y }, end: { x: A4.width - MARGIN, y: this.y }, thickness: 0.6, color: RULE });
+    if (heading.rule !== "none") {
+      this.page.drawLine({
+        start: { x: this.margin, y: this.y },
+        end: { x: A4.width - this.margin, y: this.y },
+        thickness: heading.ruleWeight,
+        color: heading.rule === "accent" ? this.accent : RULE,
+      });
+    }
     this.y -= 7;
   }
 
   entry(title: string, subtitle: string, dates: string) {
-    const size = 10;
+    const size = this.spec.size.body;
     const datesWidth = dates ? this.fonts.regular.widthOfTextAtSize(sanitise(dates), size) : 0;
-    const titleLines = this.wrap(title, this.fonts.bold, size, CONTENT_WIDTH - datesWidth - 12);
-    this.y -= 5;
-    this.ensure(size * 1.28 * (titleLines.length + (subtitle ? 1 : 0)) + 26);
+    const titleLines = this.wrap(title, this.fonts.bold, size, this.width - datesWidth - 12);
+    this.y -= this.spec.spacing.entry;
+    this.ensure(size * this.spec.spacing.line * (titleLines.length + (subtitle ? 1 : 0)) + 26);
     titleLines.forEach((line, i) => {
       this.y -= size;
-      this.page.drawText(line, { x: MARGIN, y: this.y, size, font: this.fonts.bold, color: INK });
+      this.page.drawText(line, { x: this.margin, y: this.y, size, font: this.fonts.bold, color: INK });
       if (i === 0 && dates) {
-        this.page.drawText(sanitise(dates), { x: A4.width - MARGIN - datesWidth, y: this.y, size, font: this.fonts.regular, color: MUTED });
+        this.page.drawText(sanitise(dates), { x: A4.width - this.margin - datesWidth, y: this.y, size, font: this.fonts.regular, color: MUTED });
       }
-      this.y -= size * 0.28;
+      this.y -= size * (this.spec.spacing.line - 1);
     });
-    if (subtitle) this.text(subtitle, { font: this.fonts.italic, size: 10, color: rgb(0.216, 0.255, 0.318), after: 1 });
+    if (subtitle) this.text(subtitle, { font: this.spec.subtitleItalic ? this.fonts.italic : this.fonts.regular, size, color: SUBTLE, after: 1 });
   }
 
   bullet(text: string) {
-    const size = 10;
-    const indent = 14;
-    const lines = this.wrap(text, this.fonts.regular, size, CONTENT_WIDTH - indent);
-    const lineHeight = size * 1.26;
+    const size = this.spec.size.body;
+    const indent = size * 1.4;
+    const lines = this.wrap(text, this.fonts.regular, size, this.width - indent);
+    const lineHeight = size * (this.spec.spacing.line - 0.02);
     this.ensure(lineHeight);
     lines.forEach((line, i) => {
       this.ensure(lineHeight);
       this.y -= size;
-      if (i === 0) this.page.drawText("•", { x: MARGIN + 4, y: this.y, size, font: this.fonts.regular, color: INK });
-      this.page.drawText(line, { x: MARGIN + indent, y: this.y, size, font: this.fonts.regular, color: INK });
+      if (i === 0) this.page.drawText("•", { x: this.margin + size * 0.4, y: this.y, size, font: this.fonts.regular, color: INK });
+      this.page.drawText(line, { x: this.margin + indent, y: this.y, size, font: this.fonts.regular, color: INK });
       this.y -= lineHeight - size;
     });
-    this.y -= 1.5;
+    this.y -= this.spec.spacing.bullet;
   }
 }
 
-async function createDoc(meta: { title: string; author: string }) {
+async function createDoc(meta: { title: string; author: string }, spec: TemplateSpec, accentHex: string) {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
-  const bytes = await loadFontBytes();
+  const bytes = await loadFontBytes(spec.font);
   const fonts: Fonts = {
     regular: await doc.embedFont(bytes.regular, { subset: true, features: NO_LIGATURES }),
     bold: await doc.embedFont(bytes.bold, { subset: true, features: NO_LIGATURES }),
@@ -180,21 +220,24 @@ async function createDoc(meta: { title: string; author: string }) {
   doc.setCreator("ApplyDesk");
   doc.setProducer("ApplyDesk");
   doc.setLanguage("en");
-  return { doc, writer: new PdfWriter(doc, fonts), fonts };
+  return { doc, writer: new PdfWriter(doc, fonts, spec, hexToRgb(accentHex)), fonts };
 }
 
 export async function renderResumePdf(content: ResumeContent, title: string): Promise<Uint8Array> {
-  const { doc, writer, fonts } = await createDoc({ title, author: content.contact.full_name });
+  const style = resolveStyle(content.style);
+  const { spec } = style;
+  const { doc, writer, fonts } = await createDoc({ title, author: content.contact.full_name }, spec, style.accentHex);
+  const align = spec.headerAlign;
   for (const b of resumeBlocks(content)) {
     switch (b.type) {
       case "name":
-        writer.text(b.text, { font: fonts.bold, size: 18, after: 2 });
+        writer.text(b.text, { font: fonts.bold, size: spec.size.name, color: writer.accent, after: 2, align });
         break;
       case "headline":
-        writer.text(b.text, { size: 11, color: rgb(0.122, 0.161, 0.216), after: 1 });
+        writer.text(b.text, { size: spec.size.headline, color: SUBTLE, after: 1, align });
         break;
       case "contact":
-        writer.text(b.text, { size: 9.5, color: MUTED, after: 4 });
+        writer.text(b.text, { size: spec.size.contact, color: MUTED, after: 4, align });
         break;
       case "heading":
         writer.heading(b.text);
@@ -217,7 +260,7 @@ export async function renderResumePdf(content: ResumeContent, title: string): Pr
 }
 
 export async function renderCoverLetterPdf(content: string, header: LetterHeader, title: string): Promise<Uint8Array> {
-  const { doc, writer, fonts } = await createDoc({ title, author: header.fullName });
+  const { doc, writer, fonts } = await createDoc({ title, author: header.fullName }, TEMPLATE_SPECS.classic, "#111827");
   writer.text(header.fullName, { font: fonts.bold, size: 16, after: 2 });
   if (header.contact) writer.text(header.contact, { size: 9.5, color: MUTED, after: 18 });
   writer.text(header.date, { size: 10.5, after: 12 });

@@ -3,6 +3,7 @@
 // letter, interview prep, toolkit, tracking, Kanban/table tracker, and
 // cross-user isolation. Requires supabase + `next dev` with the mock AI.
 import { createRequire } from "node:module";
+import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { chromium } from "playwright";
 import { extractText, getDocumentProxy } from "unpdf";
 import { assert, BASE_URL, resetRateLimits, uniqueEmail } from "./helpers.mjs";
@@ -161,6 +162,30 @@ try {
   const docxText = (await mammoth.extractRawText({ buffer: await docxRes.body() })).value;
   assert(docxRes.status() === 200 && docxText.includes("Tūī Interactive"), "docx content");
   step("resume downloads as PDF and DOCX with real, readable text");
+
+  // Styles: template + colour change the preview and downloads, and persist.
+  await page.goto(`${BASE_URL}/dashboard/resumes/${resumeId}`);
+  await page.getByRole("radio", { name: "Executive" }).click();
+  await page.getByRole("radio", { name: "Burgundy" }).click();
+  const previewPage = page.locator(".document-page");
+  assert((await previewPage.getAttribute("data-template")) === "executive", "preview switches template");
+  await shot("resume-styles");
+  const nameColour = await previewPage.locator("p").first().evaluate((el) => getComputedStyle(el).color);
+  assert(nameColour === "rgb(122, 31, 43)", `preview uses the chosen colour (got ${nameColour})`);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByText("Resume saved.").waitFor();
+  await page.reload();
+  assert((await page.getByRole("radio", { name: "Executive" }).getAttribute("aria-checked")) === "true", "style persists after reload");
+  const styledPdf = await PDFDocument.load(await (await page.request.get(`${BASE_URL}/api/documents/resume/${resumeId}?format=pdf`)).body());
+  const fonts = styledPdf.context
+    .enumerateIndirectObjects()
+    .map(([, o]) => (o instanceof PDFDict && o.get(PDFName.of("Subtype")) === PDFName.of("Type0") ? o.get(PDFName.of("BaseFont"))?.decodeText() : null))
+    .filter(Boolean);
+  assert(fonts.length > 0 && fonts.every((f) => f.includes("LiberationSerif")), `PDF uses the template's serif font (${fonts.join(", ")})`);
+  // (The DOCX font and colour per template are checked in tests/unit/documents.test.ts.)
+  const styledDocx = await page.request.get(`${BASE_URL}/api/documents/resume/${resumeId}?format=docx`);
+  assert(styledDocx.status() === 200 && (await mammoth.extractRawText({ buffer: await styledDocx.body() })).value.includes("Kōwhai Digital"), "styled DOCX downloads");
+  step("resume styles: template and colour update the preview, persist and apply to downloads");
 
   // --- Cover letter ---------------------------------------------------------
   await page.goto(`${BASE_URL}/dashboard/applications/${appId}?tab=cover-letter`);
