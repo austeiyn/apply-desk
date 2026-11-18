@@ -3,6 +3,7 @@
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateCareerAction, updatePersonalAction } from "@/app/dashboard/profile/actions";
+import { DetectLocationButton } from "@/components/profile/detect-location-button";
 import { TagInput } from "@/components/shared/tag-input";
 import { useFormAction } from "@/components/shared/use-action";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,14 @@ export function PersonalForm({ profile, candidate }: { profile: Profile; candida
           <Field label="Country" htmlFor="country" error={e.country?.message} optional>
             <Input id="country" autoComplete="country-name" {...r("country")} />
           </Field>
+          <div className="-mt-2 sm:col-span-2">
+            <DetectLocationButton
+              onDetected={({ city, country }) => {
+                if (city) form.setValue("location", city, { shouldDirty: true });
+                if (country) form.setValue("country", country, { shouldDirty: true });
+              }}
+            />
+          </div>
           <Field label="LinkedIn URL" htmlFor="linkedinUrl" error={e.linkedinUrl?.message} optional>
             <Input id="linkedinUrl" inputMode="url" placeholder="linkedin.com/in/your-name" {...r("linkedinUrl")} aria-invalid={!!e.linkedinUrl} />
           </Field>

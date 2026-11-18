@@ -8,6 +8,35 @@
 import http from "node:http";
 import { FIXTURES, pickFixture } from "./fixtures.mjs";
 
+// Mirror the real API's structured-output complexity limits (per request: at
+// most 16 properties with union types and 24 optional properties), so a schema
+// the API would reject with "Schema is too complex for compilation" fails here.
+function schemaComplexity(root) {
+  const defs = root.$defs ?? root.definitions ?? {};
+  const resolve = (n) => (typeof n?.$ref === "string" ? (defs[n.$ref.split("/").pop()] ?? n) : n);
+  let optional = 0;
+  let unions = 0;
+  const seen = new Set();
+  const walk = (raw) => {
+    const node = resolve(raw);
+    if (!node || typeof node !== "object" || seen.has(node)) return;
+    seen.add(node);
+    if (node.type === "object" && node.properties) {
+      const required = new Set(node.required ?? []);
+      for (const [name, child] of Object.entries(node.properties)) {
+        if (!required.has(name)) optional++;
+        const c = resolve(child);
+        if (Array.isArray(c.anyOf) || Array.isArray(c.type)) unions++;
+        walk(child);
+      }
+    }
+    if (node.items) walk(node.items);
+    for (const key of ["anyOf", "allOf"]) for (const c of node[key] ?? []) walk(c);
+  };
+  walk(root);
+  return { optional, unions };
+}
+
 export function startMockAnthropic({ port = 4010 } = {}) {
   const requests = [];
   const server = http.createServer(async (req, res) => {
@@ -30,6 +59,12 @@ export function startMockAnthropic({ port = 4010 } = {}) {
     }
 
     const schema = json.output_config?.format?.schema ?? {};
+    const complexity = schemaComplexity(schema);
+    if (complexity.unions > 16 || complexity.optional > 24) {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ type: "error", error: { type: "invalid_request_error", message: "Schema is too complex for compilation" } }));
+      return;
+    }
     const name = pickFixture(schema, json);
     const payload = typeof FIXTURES[name] === "function" ? FIXTURES[name](json) : FIXTURES[name];
     if (!payload) {

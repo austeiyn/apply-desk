@@ -4,6 +4,7 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { isAiConfigured } from "@/lib/env.server";
+import { getApproxLocation } from "@/lib/geo";
 import { OnboardingWizard } from "./wizard";
 
 export const metadata: Metadata = { title: "Set up your profile" };
@@ -12,6 +13,8 @@ export default async function OnboardingPage() {
   const { supabase, userId, profile } = await requireUser({ requireOnboarding: false });
   if (profile.onboarding_completed_at) redirect("/dashboard");
   const { data: candidate } = await supabase.from("candidate_profiles").select("*").eq("user_id", userId).single();
+  // Pre-fill city/country from the approximate network location when empty.
+  const geo = candidate?.location || candidate?.country ? null : await getApproxLocation();
 
   return (
     <div className="min-h-dvh">
@@ -27,11 +30,12 @@ export default async function OnboardingPage() {
         <OnboardingWizard
           userId={userId}
           aiConfigured={isAiConfigured()}
+          locationDetected={Boolean(geo)}
           defaults={{
             fullName: profile.full_name,
             professionalTitle: candidate?.professional_title ?? "",
-            location: candidate?.location ?? "",
-            country: candidate?.country ?? "",
+            location: candidate?.location ?? geo?.city ?? "",
+            country: candidate?.country ?? geo?.country ?? "",
             phone: candidate?.phone ?? "",
           }}
         />

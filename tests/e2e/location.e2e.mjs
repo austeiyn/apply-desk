@@ -1,0 +1,40 @@
+import { chromium } from "playwright";
+import { createClient } from "@supabase/supabase-js";
+import { assert, BASE_URL, login, resetRateLimits, uniqueEmail } from "./helpers.mjs";
+// Location pre-fill from Netlify's x-nf-geo header (simulated here) and the
+// "Use my current location" button, including the no-header fallback.
+const out = process.argv[2];
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+await resetRateLimits(admin);
+const email = uniqueEmail("geo"); const password = "Passw0rd!geo";
+await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: "Geo Person" } });
+const geo = Buffer.from(JSON.stringify({ city: "Auckland", subdivision: { name: "Auckland" }, country: { code: "NZ", name: "New Zealand" } })).toString("base64");
+const browser = await chromium.launch();
+const context = await browser.newContext({ extraHTTPHeaders: { "x-nf-geo": geo }, viewport: { width: 1280, height: 900 } });
+const page = await context.newPage();
+const errors = []; page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+await login(page, email, password);
+await page.waitForURL(/onboarding/);
+assert((await page.inputValue("#location")) === "Auckland", "city prefilled from geo");
+assert((await page.inputValue("#country")) === "New Zealand", "country prefilled from geo");
+assert(await page.getByText("We filled in your approximate location").isVisible(), "hint shown");
+if (out) await page.screenshot({ path: `${out}/onboarding-geo.png` });
+await page.fill("#location", ""); await page.fill("#country", "");
+await page.getByRole("button", { name: "Use my current location" }).click();
+await page.waitForFunction(() => document.querySelector("#location")?.value === "Auckland");
+assert((await page.inputValue("#country")) === "New Zealand", "button fills country");
+await page.getByRole("button", { name: "Continue" }).click();
+await page.getByText("Upload my CV").waitFor();
+await page.getByRole("button", { name: "Skip for now" }).click();
+await page.locator("#preferredLocations").waitFor();
+assert((await page.inputValue("#preferredLocations")) === "Auckland", "preferred location suggested");
+await page.getByRole("button", { name: "Finish setup" }).click();
+await page.waitForURL(/dashboard/);
+// Without the header (e.g. local dev) the button explains instead of failing silently.
+await context.setExtraHTTPHeaders({});
+await page.goto(`${BASE_URL}/dashboard/profile`);
+await page.getByRole("button", { name: "Use my current location" }).click();
+await page.getByText("We couldn't detect your location").waitFor();
+assert(errors.length === 0, `no console errors: ${errors.join(" | ")}`);
+console.log("Location E2E passed (7 checks)");
+await browser.close();

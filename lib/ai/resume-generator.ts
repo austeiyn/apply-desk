@@ -8,7 +8,7 @@ import { SECTION_KEYS, type ResumeContent, type ResumePreferences } from "@/lib/
 import { generateStructured } from "./client";
 import { buildApplicationContext, buildCandidateContext, wrapUntrusted } from "./prompts";
 
-const ResumeAiSchema = z.object({
+export const ResumeAiSchema = z.object({
   headline: z.string(),
   summary: z.string(),
   core_skills: z.array(z.string()),
@@ -90,7 +90,7 @@ export async function generateResume(params: {
 
 /* Section regeneration ------------------------------------------------------- */
 
-const SectionSchema = z.object({
+export const SectionSchema = z.object({
   section: z.enum(["summary", "skills", "experience"]),
   summary: z.string().nullable(),
   skills: z.array(z.string()),

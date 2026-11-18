@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { check, checkRow, fail, ok, runAction, type ActionResult } from "@/lib/actions";
 import { requireActiveUserForAction } from "@/lib/auth/session";
+import { getApproxLocation } from "@/lib/geo";
 import { uuid } from "@/lib/validation/common";
 import {
   careerSchema,
@@ -19,6 +20,19 @@ import {
 function refresh() {
   revalidatePath("/dashboard/profile");
   revalidatePath("/dashboard");
+}
+
+/**
+ * The caller's approximate city and country from the hosting network
+ * (Netlify), for pre-filling location fields. Nothing is stored here.
+ */
+export async function detectLocationAction(): Promise<ActionResult<{ city: string | null; country: string | null }>> {
+  return runAction(async () => {
+    await requireActiveUserForAction();
+    const geo = await getApproxLocation();
+    if (!geo) return fail("We couldn't detect your location. Type it in instead.");
+    return ok({ city: geo.city, country: geo.country });
+  });
 }
 
 export async function updatePersonalAction(input: unknown): Promise<ActionResult<null>> {

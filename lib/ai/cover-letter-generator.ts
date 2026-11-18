@@ -8,7 +8,7 @@ import { resumeToPlainText, type ResumeContent } from "@/lib/resume/types";
 import { generateStructured } from "./client";
 import { buildApplicationContext, buildCandidateContext, wrapUntrusted } from "./prompts";
 
-const CoverLetterSchema = z.object({
+export const CoverLetterSchema = z.object({
   greeting: z.string(),
   paragraphs: z.array(z.string()),
   closing: z.string(),

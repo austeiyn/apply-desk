@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { Check, FileUp, PenLine } from "lucide-react";
 import { CvUploader } from "@/components/cv/cv-uploader";
+import { DetectLocationButton } from "@/components/profile/detect-location-button";
 import { TagInput } from "@/components/shared/tag-input";
 import { useFormAction } from "@/components/shared/use-action";
 import { Button } from "@/components/ui/button";
@@ -24,14 +25,34 @@ type Prefs = z.input<typeof onboardingPrefsSchema>;
 
 const STEPS = ["About you", "Your experience", "What you're looking for"];
 
-export function OnboardingWizard({ userId, aiConfigured, defaults }: { userId: string; aiConfigured: boolean; defaults: Basics }) {
+export function OnboardingWizard({
+  userId,
+  aiConfigured,
+  defaults,
+  locationDetected = false,
+}: {
+  userId: string;
+  aiConfigured: boolean;
+  defaults: Basics;
+  /** City/country were pre-filled from the visitor's approximate location. */
+  locationDetected?: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [experienceChoice, setExperienceChoice] = useState<"upload" | "manual" | null>(null);
   const [uploaded, setUploaded] = useState<{ cvId: string; parsed: boolean } | null>(null);
 
   const basicsForm = useForm<Basics>({ resolver: zodResolver(onboardingBasicsSchema) as never, defaultValues: defaults });
-  const basics = useFormAction(basicsForm, saveOnboardingBasicsAction, { onSuccess: () => setStep(1) });
+  const basics = useFormAction(basicsForm, saveOnboardingBasicsAction, {
+    onSuccess: () => {
+      // Suggest the city (or country) they gave as a preferred work location.
+      if (!prefsForm.getValues("preferredLocations")) {
+        const { location, country } = basicsForm.getValues();
+        prefsForm.setValue("preferredLocations", location?.trim() || country?.trim() || "");
+      }
+      setStep(1);
+    },
+  });
 
   const prefsForm = useForm<Prefs>({
     resolver: zodResolver(onboardingPrefsSchema) as never,
@@ -87,6 +108,17 @@ export function OnboardingWizard({ userId, aiConfigured, defaults }: { userId: s
               <Field label="Country" htmlFor="country" optional>
                 <Input id="country" autoComplete="country-name" {...basicsForm.register("country")} />
               </Field>
+              <div className="-mt-2 flex flex-wrap items-center gap-x-3 sm:col-span-2">
+                <DetectLocationButton
+                  onDetected={({ city, country }) => {
+                    if (city) basicsForm.setValue("location", city, { shouldDirty: true });
+                    if (country) basicsForm.setValue("country", country, { shouldDirty: true });
+                  }}
+                />
+                {locationDetected ? (
+                  <p className="text-xs text-muted-foreground">We filled in your approximate location. Change it if it&apos;s wrong.</p>
+                ) : null}
+              </div>
               <Field label="Phone" htmlFor="phone" optional className="sm:col-span-2">
                 <Input id="phone" type="tel" autoComplete="tel" {...basicsForm.register("phone")} />
               </Field>

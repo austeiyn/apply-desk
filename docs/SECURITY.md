@@ -53,6 +53,7 @@ ApplyDesk stores sensitive personal and career information. Controls are layered
 
 ## Privacy
 - Users can export all of their data (JSON) and permanently delete their account and files at any time.
+- Location suggestions use only the city and country Netlify derives from the visitor's network address (`x-nf-geo`); coordinates are ignored and nothing is stored unless the user saves the form. There is no browser location prompt.
 - Admin actions (suspension, deletion, support views, settings and announcement changes, role changes) are audited.
 
 ## Reporting a vulnerability
