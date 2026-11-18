@@ -6,7 +6,7 @@
 //      (the suites start a mock Anthropic API on port 4010 themselves)
 import { spawnSync } from "node:child_process";
 
-const suites = ["auth.e2e.mjs", "profile-cv.e2e.mjs", "applications.e2e.mjs", "admin.e2e.mjs", "mobile.e2e.mjs", "location.e2e.mjs", "ai-runner.e2e.mjs"];
+const suites = ["auth.e2e.mjs", "profile-cv.e2e.mjs", "applications.e2e.mjs", "admin.e2e.mjs", "mobile.e2e.mjs", "location.e2e.mjs", "ai-runner.e2e.mjs", "clip.e2e.mjs"];
 let failed = 0;
 for (const suite of suites) {
   console.log(`\n━━ ${suite} ━━`);

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, CheckCircle2, Link2, PenLine } from "lucide-react";
 import { createApplicationAction } from "@/app/dashboard/applications/actions";
 import { JobDetailsFields } from "@/components/applications/job-details-fields";
+import { CLIP_STORAGE_KEY, SendToApplyDeskButton } from "@/components/applications/send-to-applydesk";
 import { useFormAction } from "@/components/shared/use-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,44 +65,48 @@ export function NewApplicationForm({ aiConfigured }: { aiConfigured: boolean }) 
     onSuccess: (data) => router.push(`/dashboard/applications/${data.id}?tab=analysis${aiConfigured ? "&analyse=1" : ""}`),
   });
 
+  /** Fill the form from an import response (link or clipped advertisement). */
+  function applyImport(res: Response, data: ImportResponse & { error?: string }, sourceUrl: string, successMessage: string) {
+    if (data.ok && data.job) {
+      const j = data.job;
+      form.reset({
+        jobUrl: data.url ?? sourceUrl,
+        source: "url",
+        jobTitle: j.jobTitle ?? "",
+        companyName: j.companyName ?? "",
+        location: j.location ?? "",
+        employmentType: j.employmentType ?? "",
+        salaryRange: j.salaryRange ?? "",
+        deadline: j.deadline ?? "",
+        jobDescription: j.description,
+        responsibilities: j.responsibilities ?? "",
+        requiredQualifications: j.requiredQualifications ?? "",
+        requiredSkills: j.requiredSkills ?? "",
+        preferredQualifications: j.preferredQualifications ?? "",
+      });
+      setImportState({ kind: "success", message: successMessage });
+    } else {
+      // Keep the link so the user can still apply through the original listing.
+      form.reset({
+        ...EMPTY,
+        jobUrl: /^https?:\/\//i.test(sourceUrl) ? sourceUrl : "",
+        jobTitle: data.partial?.jobTitle ?? "",
+        companyName: data.partial?.companyName ?? "",
+      });
+      const blockedInput = data.reason === "invalid_url" || data.reason === "blocked_address" || res.status === 400;
+      setImportState({ kind: blockedInput ? "error" : "fallback", message: data.message ?? data.error ?? "Something went wrong." });
+      if (blockedInput) return;
+    }
+    setShowForm(true);
+  }
+
   async function importUrl() {
     setImportState(null);
     if (!url.trim()) return setImportState({ kind: "error", message: "Paste a job advertisement link first." });
     setFetching(true);
     try {
       const res = await fetch("/api/jobs/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: url.trim() }) });
-      const data = (await res.json()) as ImportResponse & { error?: string };
-      if (data.ok && data.job) {
-        const j = data.job;
-        form.reset({
-          jobUrl: data.url ?? url.trim(),
-          source: "url",
-          jobTitle: j.jobTitle ?? "",
-          companyName: j.companyName ?? "",
-          location: j.location ?? "",
-          employmentType: j.employmentType ?? "",
-          salaryRange: j.salaryRange ?? "",
-          deadline: j.deadline ?? "",
-          jobDescription: j.description,
-          responsibilities: j.responsibilities ?? "",
-          requiredQualifications: j.requiredQualifications ?? "",
-          requiredSkills: j.requiredSkills ?? "",
-          preferredQualifications: j.preferredQualifications ?? "",
-        });
-        setImportState({ kind: "success", message: "We retrieved the advertisement. Check the details below and edit anything that's wrong." });
-      } else {
-        // Keep the link so the user can still apply through the original listing.
-        form.reset({
-          ...EMPTY,
-          jobUrl: /^https?:\/\//i.test(url.trim()) ? url.trim() : "",
-          jobTitle: data.partial?.jobTitle ?? "",
-          companyName: data.partial?.companyName ?? "",
-        });
-        const blockedInput = data.reason === "invalid_url" || data.reason === "blocked_address" || res.status === 400;
-        setImportState({ kind: blockedInput ? "error" : "fallback", message: data.message ?? data.error ?? "Something went wrong." });
-        if (blockedInput) return;
-      }
-      setShowForm(true);
+      applyImport(res, (await res.json()) as ImportResponse, url.trim(), "We retrieved the advertisement. Check the details below and edit anything that's wrong.");
     } catch {
       setImportState({ kind: "fallback", message: "Couldn't automatically retrieve this job advertisement. Paste the job description below and we'll take care of the rest." });
       setShowForm(true);
@@ -109,6 +114,45 @@ export function NewApplicationForm({ aiConfigured }: { aiConfigured: boolean }) 
       setFetching(false);
     }
   }
+
+  // An advertisement sent with the "Send to ApplyDesk" bookmarklet (see /clip).
+  const clipChecked = useRef(false);
+  useEffect(() => {
+    if (clipChecked.current) return;
+    clipChecked.current = true;
+    if (new URLSearchParams(window.location.search).get("clip") !== "1") return;
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem(CLIP_STORAGE_KEY);
+      sessionStorage.removeItem(CLIP_STORAGE_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    router.replace("/dashboard/applications/new");
+    if (!raw) return;
+    const clip = raw;
+    void (async () => {
+      let sourceUrl = "";
+      try {
+        sourceUrl = String((JSON.parse(clip) as { url?: unknown }).url ?? "");
+      } catch {
+        /* handled by the server's validation */
+      }
+      setUrl(sourceUrl);
+      setFetching(true);
+      try {
+        const res = await fetch("/api/jobs/clip", { method: "POST", headers: { "Content-Type": "application/json" }, body: clip });
+        applyImport(res, (await res.json()) as ImportResponse, sourceUrl, "We read the advertisement you sent. Check the details below and edit anything that's wrong.");
+      } catch {
+        setImportState({ kind: "fallback", message: "Couldn't automatically retrieve this job advertisement. Paste the job description below and we'll take care of the rest." });
+        setShowForm(true);
+      } finally {
+        setFetching(false);
+      }
+    })();
+    // Runs once on arrival; applyImport only uses stable setters and the form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -149,10 +193,17 @@ export function NewApplicationForm({ aiConfigured }: { aiConfigured: boolean }) 
           ) : null}
           {importState?.kind === "fallback" ? (
             <p className="text-xs text-muted-foreground">
-              Tip: open the advertisement, select all of its text (Ctrl+A or ⌘A), copy it and paste it into <strong>Job description</strong>. You can leave the
-              other fields blank; the analysis fills in the title, company, location and requirements.
+              Tip: use the <strong>Send to ApplyDesk</strong> button below, or open the advertisement, select all of its text (Ctrl+A or ⌘A), copy it and paste it
+              into <strong>Job description</strong>. You can leave the other fields blank; the analysis fills in the title, company, location and requirements.
             </p>
           ) : null}
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center sm:gap-4">
+            <SendToApplyDeskButton />
+            <p className="text-xs text-muted-foreground">
+              For sites that block importing (SEEK, LinkedIn and others): drag this button to your bookmarks bar once, then click it while you&apos;re viewing a
+              job advertisement. It sends the page you&apos;re looking at here, ready to review.
+            </p>
+          </div>
           {!showForm ? (
             <div className="flex items-center gap-3 pt-1">
               <span className="h-px flex-1 bg-border" />

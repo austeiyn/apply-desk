@@ -104,7 +104,7 @@ Other useful scripts: `npm run typecheck`, `npm run lint`, `npm run build`, `npm
 |---|---|---|
 | Unit | `npm test` | SSRF guard (IP encodings, redirects, DNS rebinding, compression bombs), job extraction, AI client (structured output, refusals, truncation, error mapping, metering), integrity rules, document rendering (PDF/DOCX text round-trip, ATS structure) |
 | Database | `npm run test:db` | 39 tests against the local Supabase stack: user isolation, admin boundaries, support-access consent, suspension, immutable audit log, resume versioning, storage privacy, registration lock, deletion cascade, plus schema invariants (RLS on every table, pinned `search_path`, grants) |
-| End to end | `npm run test:e2e` | Playwright suites (69 checks): auth with real verification emails, CV import with prompt-injection content, the full application workflow, admin console, account export/deletion, mobile layouts, location pre-fill and the AI hand-off to the edge runner |
+| End to end | `npm run test:e2e` | Playwright suites (73 checks): auth with real verification emails, CV import with prompt-injection content, the full application workflow, admin console, account export/deletion, mobile layouts, location pre-fill, the AI hand-off to the edge runner and the Send to ApplyDesk bookmarklet |
 
 The end-to-end suites start a small **mock of the Anthropic Messages API** (`tests/e2e/mock-anthropic.mjs`) so the real SDK code path runs without spending tokens. Its fixtures deliberately include integrity traps (an unsupported "strong" match, a skill the user doesn't have, an invented metric, an unknown role) that the app must neutralise. Run the app against it with:
 

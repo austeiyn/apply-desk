@@ -54,9 +54,11 @@ try {
   const ownerCtx = await browser.newContext();
   const page = await ownerCtx.newPage();
   await login(page, owner.email, password);
+  await page.waitForURL(/\/dashboard/);
   const intruderCtx = await browser.newContext();
   const other = await intruderCtx.newPage();
   await login(other, intruder.email, password);
+  await other.waitForURL(/\/dashboard/);
 
   const first = events(await (await page.request.post(`${BASE_URL}/api/ai/analyse`, { headers: json, data: { applicationId: app.id } })).text());
   const defer = first.find((e) => e.type === "defer");

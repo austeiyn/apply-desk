@@ -33,6 +33,7 @@ ApplyDesk stores sensitive personal and career information. Controls are layered
 - 12-second overall deadline; 3 MB limit measured after decompression (compression-bomb safe); HTML only.
 - An honest bot User-Agent is used. Logins, paywalls, CAPTCHAs and 401/403 responses are reported, never bypassed.
 - Extracted content is converted to plain text; third-party HTML is never rendered.
+- For sites that block retrieval, the **Send to ApplyDesk** bookmarklet runs in the user's own browser on the page they are viewing and passes its JSON-LD and visible text to `/clip` in the URL fragment (never sent to a server), then via the tab's `sessionStorage` to the signed-in form. Nothing is fetched or bypassed. The server treats the clip as untrusted: size-limited, text escaped, JSON-LD only parsed as JSON, same extractor as link imports, rate-limited and nothing saved until the user confirms.
 
 ## AI safety and integrity
 - All AI calls run server-side through one client; API keys never reach the browser.
