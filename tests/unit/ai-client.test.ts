@@ -124,6 +124,16 @@ describe("generateStructured", () => {
     await expect(generateStructured(request)).rejects.toMatchObject({ code: "not_configured" });
   });
 
+  it("says clearly when the API account has run out of credit", async () => {
+    const { generateStructured } = await import("@/lib/ai/client");
+    nextReply = {
+      status: 400,
+      body: { type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits." } },
+    };
+    await expect(generateStructured(request)).rejects.toMatchObject({ code: "out_of_credit" });
+    expect(usage[0]).toMatchObject({ status: "error", errorCode: "out_of_credit" });
+  });
+
   it("refuses oversized prompts before calling the API", async () => {
     const { generateStructured } = await import("@/lib/ai/client");
     lastRequest = null;

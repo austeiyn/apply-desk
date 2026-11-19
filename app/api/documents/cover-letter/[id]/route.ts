@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getSession } from "@/lib/auth/session";
+import { coverLetterStyle } from "@/lib/data/documents";
 import { renderCoverLetterDocx } from "@/lib/documents/docx";
 import { renderCoverLetterPdf } from "@/lib/documents/pdf";
 import { fileResponse, parseFormat } from "@/lib/documents/response";
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/document
   const { supabase, userId, profile } = session;
   const { data: letter } = await supabase
     .from("generated_cover_letters")
-    .select("title, content, application_id, job_applications(company_name, job_title)")
+    .select("title, content, style, application_id, job_applications(company_name, job_title)")
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -32,6 +33,8 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/document
     recipient: job?.company_name ? [job.company_name] : [],
   };
   const fileName = safeFileName([profile.full_name, "Cover Letter", job?.company_name], format);
-  const body = format === "pdf" ? await renderCoverLetterPdf(letter.content, header, letter.title) : await renderCoverLetterDocx(letter.content, header, letter.title);
+  const style = await coverLetterStyle(supabase, userId, letter);
+  const body =
+    format === "pdf" ? await renderCoverLetterPdf(letter.content, header, letter.title, style) : await renderCoverLetterDocx(letter.content, header, letter.title, style);
   return fileResponse(body, format, fileName);
 }

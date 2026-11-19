@@ -151,6 +151,27 @@ describe("resume templates", () => {
   });
 });
 
+describe("cover letter templates", () => {
+  const header = { fullName: "Aroha Ngata", contact: "Wellington | aroha@example.com", date: "18 November 2026", recipient: ["Harbour & Co"] };
+  const letterText = "Dear Hiring Manager,\n\nI'm applying for the Senior Web Developer role at Harbour & Co.\n\nKind regards,\nAroha Ngata";
+
+  for (const template of RESUME_TEMPLATES) {
+    it(`${template}: PDF and DOCX keep the letter text and use the template's font`, async () => {
+      const pdfBytes = await renderCoverLetterPdf(letterText, header, "Cover letter", { template, accent: "plum" });
+      const { text } = await pdfText(pdfBytes);
+      expect(text).toContain("Harbour & Co");
+      expect(text).toContain("Senior Web Developer role");
+      const family = TEMPLATE_SPECS[template].font === "serif" ? "LiberationSerif" : "LiberationSans";
+      expect((await pdfFontNames(pdfBytes)).every((f) => f.includes(family))).toBe(true);
+      const docx = await renderCoverLetterDocx(letterText, header, "Cover letter", { template, accent: "plum" });
+      expect((await mammoth.extractRawText({ buffer: docx })).value).toContain("Senior Web Developer role");
+      const xml = await docxXml(docx);
+      expect(xml).toContain(DOCX_FONT[TEMPLATE_SPECS[template].font]);
+      expect(xml).toContain(ACCENT_HEX.plum.slice(1));
+    });
+  }
+});
+
 describe("cover letter documents", () => {
   const letter = "Dear Hiring Manager,\n\nFirst paragraph about Kōwhai Digital.\n\nSecond paragraph.\n\nKind regards,\nAroha Ngata";
   const header = { fullName: "Aroha Ngata", contact: "Wellington | aroha@example.com", date: "15 November 2026", recipient: ["Harbour & Co"] };

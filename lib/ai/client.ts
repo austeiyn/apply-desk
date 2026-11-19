@@ -221,6 +221,7 @@ function runnerError(code: string | null): AiError {
     case "upstream_rate_limited":
     case "upstream_unavailable":
     case "input_too_large":
+    case "out_of_credit":
       return new AiError(code);
     case "not_configured":
       return new AiError("not_configured", "The AI service rejected the server's API key. The administrator needs to check ANTHROPIC_API_KEY.");
@@ -297,6 +298,7 @@ function mapApiError(error: unknown): AiError {
   }
   if (error instanceof Anthropic.BadRequestError) {
     const message = error.message.toLowerCase();
+    if (message.includes("credit balance")) return new AiError("out_of_credit", undefined, { cause: error });
     if (message.includes("too long") || message.includes("too many tokens") || message.includes("context")) {
       return new AiError("input_too_large", undefined, { cause: error });
     }

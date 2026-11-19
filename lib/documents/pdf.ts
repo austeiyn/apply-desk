@@ -6,7 +6,7 @@ import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb, setCharacterSpacing, type PDFFont, type PDFPage, type RGB } from "pdf-lib";
 import type { ResumeContent } from "@/lib/resume/types";
 import { coverLetterParagraphs, resumeBlocks, type LetterHeader } from "./layout";
-import { MUTED_HEX, resolveStyle, RULE_HEX, SUBTLE_HEX, TEMPLATE_SPECS, type TemplateSpec } from "./templates";
+import { MUTED_HEX, resolveStyle, RULE_HEX, SUBTLE_HEX, type ResumeStyle, type TemplateSpec } from "./templates";
 
 // A4 in points. Margins, sizes and spacing come from the template spec.
 const A4 = { width: 595.28, height: 841.89 };
@@ -72,10 +72,18 @@ class PdfWriter {
     readonly fonts: Fonts,
     readonly spec: TemplateSpec,
     readonly accent: RGB,
+    margin: number = spec.margin,
   ) {
-    this.margin = spec.margin;
-    this.width = A4.width - spec.margin * 2;
+    this.margin = margin;
+    this.width = A4.width - margin * 2;
     this.newPage();
+  }
+
+  /** Full-width horizontal rule. */
+  rule(color: RGB, thickness: number, before = 4, after = 10) {
+    this.y -= before;
+    this.page.drawLine({ start: { x: this.margin, y: this.y }, end: { x: A4.width - this.margin, y: this.y }, thickness, color });
+    this.y -= after;
   }
 
   newPage() {
@@ -206,7 +214,7 @@ class PdfWriter {
   }
 }
 
-async function createDoc(meta: { title: string; author: string }, spec: TemplateSpec, accentHex: string) {
+async function createDoc(meta: { title: string; author: string }, spec: TemplateSpec, accentHex: string, margin?: number) {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   const bytes = await loadFontBytes(spec.font);
@@ -220,7 +228,7 @@ async function createDoc(meta: { title: string; author: string }, spec: Template
   doc.setCreator("ApplyDesk");
   doc.setProducer("ApplyDesk");
   doc.setLanguage("en");
-  return { doc, writer: new PdfWriter(doc, fonts, spec, hexToRgb(accentHex)), fonts };
+  return { doc, writer: new PdfWriter(doc, fonts, spec, hexToRgb(accentHex), margin), fonts };
 }
 
 export async function renderResumePdf(content: ResumeContent, title: string): Promise<Uint8Array> {
@@ -259,15 +267,21 @@ export async function renderResumePdf(content: ResumeContent, title: string): Pr
   return doc.save();
 }
 
-export async function renderCoverLetterPdf(content: string, header: LetterHeader, title: string): Promise<Uint8Array> {
-  const { doc, writer, fonts } = await createDoc({ title, author: header.fullName }, TEMPLATE_SPECS.classic, "#111827");
-  writer.text(header.fullName, { font: fonts.bold, size: 16, after: 2 });
-  if (header.contact) writer.text(header.contact, { size: 9.5, color: MUTED, after: 18 });
-  writer.text(header.date, { size: 10.5, after: 12 });
-  for (const line of header.recipient) writer.text(line, { size: 10.5 });
+export async function renderCoverLetterPdf(content: string, header: LetterHeader, title: string, style?: ResumeStyle): Promise<Uint8Array> {
+  const { spec, accentHex } = resolveStyle(style);
+  const letter = spec.letter;
+  const { doc, writer, fonts } = await createDoc({ title, author: header.fullName }, spec, accentHex, letter.margin);
+  const align = spec.headerAlign;
+  const body = letter.bodySize;
+  writer.text(header.fullName, { font: fonts.bold, size: letter.nameSize, color: writer.accent, after: 2, align });
+  if (header.contact) writer.text(header.contact, { size: spec.size.contact, color: MUTED, align });
+  if (letter.headerRule !== "none") writer.rule(letter.headerRule === "accent" ? writer.accent : RULE, letter.headerRule === "accent" ? 1.2 : 0.6, 8, 16);
+  else writer.y -= 18;
+  writer.text(header.date, { size: body, after: 12 });
+  for (const line of header.recipient) writer.text(line, { size: body });
   if (header.recipient.length) writer.y -= 12;
   for (const para of coverLetterParagraphs(content)) {
-    writer.text(para, { size: 10.5, lineGap: 1.5, after: 10 });
+    writer.text(para, { size: body, lineGap: 1.5, after: letter.paragraphGap });
   }
   return doc.save();
 }

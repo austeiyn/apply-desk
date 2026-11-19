@@ -7,6 +7,8 @@
  * Sizes and spacing are in points (1/72 inch).
  */
 
+import { z } from "zod";
+
 export const RESUME_TEMPLATES = ["classic", "modern", "executive", "compact"] as const;
 export type ResumeTemplate = (typeof RESUME_TEMPLATES)[number];
 
@@ -58,6 +60,15 @@ export interface TemplateSpec {
   subtitleItalic: boolean;
   /** Accent used when the user hasn't picked one. */
   defaultAccent: AccentColour;
+  /** Cover letters in this style. */
+  letter: {
+    margin: number;
+    nameSize: number;
+    bodySize: number;
+    paragraphGap: number;
+    /** Rule under the letterhead. */
+    headerRule: "none" | "grey" | "accent";
+  };
 }
 
 export const TEMPLATE_SPECS: Record<ResumeTemplate, TemplateSpec> = {
@@ -72,6 +83,7 @@ export const TEMPLATE_SPECS: Record<ResumeTemplate, TemplateSpec> = {
     spacing: { section: 9, entry: 5, bullet: 1.5, line: 1.28 },
     subtitleItalic: true,
     defaultAccent: "charcoal",
+    letter: { margin: 50, nameSize: 16, bodySize: 10.5, paragraphGap: 10, headerRule: "none" },
   },
   modern: {
     label: "Modern",
@@ -84,6 +96,7 @@ export const TEMPLATE_SPECS: Record<ResumeTemplate, TemplateSpec> = {
     spacing: { section: 10, entry: 5, bullet: 1.5, line: 1.3 },
     subtitleItalic: false,
     defaultAccent: "teal",
+    letter: { margin: 50, nameSize: 20, bodySize: 10.5, paragraphGap: 10, headerRule: "accent" },
   },
   executive: {
     label: "Executive",
@@ -96,6 +109,7 @@ export const TEMPLATE_SPECS: Record<ResumeTemplate, TemplateSpec> = {
     spacing: { section: 11, entry: 6, bullet: 2, line: 1.28 },
     subtitleItalic: true,
     defaultAccent: "navy",
+    letter: { margin: 64, nameSize: 19, bodySize: 11, paragraphGap: 11, headerRule: "grey" },
   },
   compact: {
     label: "Compact",
@@ -108,12 +122,23 @@ export const TEMPLATE_SPECS: Record<ResumeTemplate, TemplateSpec> = {
     spacing: { section: 6, entry: 3, bullet: 0.5, line: 1.22 },
     subtitleItalic: true,
     defaultAccent: "charcoal",
+    letter: { margin: 42, nameSize: 15, bodySize: 10, paragraphGap: 8, headerRule: "none" },
   },
 };
 
-export interface ResumeStyle {
+/** A document's style as stored (resume content_json.style, generated_cover_letters.style). */
+export const documentStyleSchema = z.object({ template: z.enum(RESUME_TEMPLATES), accent: z.enum(ACCENT_COLOURS).optional() });
+
+// A type alias (not an interface) so it is assignable to the database's Json type.
+export type ResumeStyle = {
   template: ResumeTemplate;
   accent?: AccentColour;
+};
+
+/** Parse a stored style; anything unreadable counts as "no style chosen". */
+export function parseStyle(value: unknown): ResumeStyle | undefined {
+  const parsed = documentStyleSchema.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
 }
 
 export interface ResolvedStyle {

@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         },
       };
     } catch (error) {
-      if (error instanceof AiError && !["duplicate", "rate_limited", "quota_daily", "quota_monthly", "not_configured", "disabled"].includes(error.code)) {
+      if (error instanceof AiError && !["duplicate", "rate_limited", "quota_daily", "quota_monthly", "not_configured", "disabled", "out_of_credit"].includes(error.code)) {
         await supabase.from("source_cvs").update({ extraction_error: error.userMessage.slice(0, 1000) }).eq("id", cv.id).eq("user_id", userId);
       }
       throw error;

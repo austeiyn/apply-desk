@@ -15,7 +15,9 @@ import { Field } from "@/components/ui/form-controls";
 import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { COVER_LETTER_TONES, type CoverLetterTone } from "@/lib/constants";
-import { coverLetterParagraphs } from "@/lib/documents/layout";
+import { StylePicker } from "@/components/resume/style-picker";
+import type { ResumeStyle } from "@/lib/documents/templates";
+import { CoverLetterPreview } from "./cover-letter-preview";
 import { relativeTime } from "@/lib/utils";
 
 export function CoverLetterEditor({
@@ -26,7 +28,7 @@ export function CoverLetterEditor({
   aiConfigured,
 }: {
   letterId: string;
-  initial: { title: string; content: string; tone: CoverLetterTone; version: number; updatedAt: string };
+  initial: { title: string; content: string; tone: CoverLetterTone; style: ResumeStyle | undefined; version: number; updatedAt: string };
   header: { fullName: string; contact: string; recipient: string | null };
   application: { id: string; label: string } | null;
   aiConfigured: boolean;
@@ -35,6 +37,7 @@ export function CoverLetterEditor({
   const [title, setTitle] = useState(initial.title);
   const [content, setContent] = useState(initial.content);
   const [tone, setTone] = useState<CoverLetterTone>(initial.tone);
+  const [style, setStyle] = useState<ResumeStyle | undefined>(initial.style);
   const [saved, setSaved] = useState(initial);
 
   // Re-sync when the server sends a new version (e.g. after regenerating).
@@ -44,13 +47,14 @@ export function CoverLetterEditor({
     setTitle(initial.title);
     setContent(initial.content);
     setTone(initial.tone);
+    setStyle(initial.style);
     setSaved(initial);
   }
 
-  const dirty = title !== saved.title || content !== saved.content || tone !== saved.tone;
+  const dirty = title !== saved.title || content !== saved.content || tone !== saved.tone || JSON.stringify(style) !== JSON.stringify(saved.style);
   const save = useAction(saveCoverLetterAction, {
     onSuccess: (d) => {
-      setSaved({ title, content, tone, version: d.version, updatedAt: new Date().toISOString() });
+      setSaved({ title, content, tone, style, version: d.version, updatedAt: new Date().toISOString() });
       router.refresh();
     },
   });
@@ -58,7 +62,7 @@ export function CoverLetterEditor({
   const remove = useAction(deleteCoverLetterAction, { onSuccess: () => router.push("/dashboard/cover-letters") });
   const regen = useAiJob<{ coverLetterId: string; warnings: string[] }>("/api/ai/cover-letter");
 
-  const doSave = async () => (await save.run(letterId, { title, content, tone })).ok;
+  const doSave = async () => (await save.run(letterId, { title, content, tone, style })).ok;
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
 
   const regenerate = async () => {
@@ -135,20 +139,12 @@ export function CoverLetterEditor({
             <p className="text-xs text-muted-foreground">{words} words</p>
           </CardContent>
         </Card>
-        <div className="rounded-xl bg-muted/50 p-4">
-          <div className="document-page mx-auto max-w-[794px] space-y-3 rounded-sm px-[7%] py-[7%] text-[12px] shadow-[0_1px_3px_rgba(15,26,43,0.12)] ring-1 ring-black/5">
-            <div>
-              <p className="text-[1.5em] font-bold">{header.fullName}</p>
-              {header.contact ? <p className="text-[0.9em] text-gray-600">{header.contact}</p> : null}
-            </div>
-            <p className="pt-2">{new Date().toLocaleDateString("en-NZ", { day: "numeric", month: "long", year: "numeric" })}</p>
-            {header.recipient ? <p>{header.recipient}</p> : null}
-            {coverLetterParagraphs(content).map((p, i) => (
-              <p key={i} className="whitespace-pre-line leading-relaxed">
-                {p}
-              </p>
-            ))}
-          </div>
+        <div className="space-y-3 rounded-xl bg-muted/50 p-4">
+          <StylePicker value={style} onChange={setStyle} />
+          <p className="text-xs text-muted-foreground">
+            {application ? "New letters match the style of this application's resume; change it here if you like." : "Pick a style to match your resume."}
+          </p>
+          <CoverLetterPreview style={style} header={header} content={content} />
         </div>
       </div>
     </div>

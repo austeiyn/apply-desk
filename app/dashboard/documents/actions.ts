@@ -6,7 +6,9 @@ import { check, checkRow, fail, ok, runAction, type ActionResult } from "@/lib/a
 import { requireActiveUserForAction } from "@/lib/auth/session";
 import { COVER_LETTER_TONE_VALUES } from "@/lib/constants";
 import { getOwnedApplication } from "@/lib/data/applications";
+import { latestResumeStyle } from "@/lib/data/documents";
 import { getCandidateBundle } from "@/lib/data/profile";
+import { documentStyleSchema } from "@/lib/documents/templates";
 import { resumeFromProfile } from "@/lib/resume/assemble";
 import { ResumeContentSchema } from "@/lib/resume/types";
 import { uuid } from "@/lib/validation/common";
@@ -146,6 +148,7 @@ export async function createBlankCoverLetterAction(applicationId: string | null)
           title: (app ? ["Cover letter", app.job_title, app.company_name].filter(Boolean).join(" – ") : "Cover letter").slice(0, 200),
           content,
           tone: "professional",
+          style: (await latestResumeStyle(supabase, userId, app?.id ?? null)) ?? null,
           origin: "manual",
         })
         .select("id")
@@ -160,6 +163,7 @@ const saveLetterSchema = z.object({
   title,
   content: z.string().max(20000, "Cover letters are limited to 20,000 characters."),
   tone: z.enum(COVER_LETTER_TONE_VALUES),
+  style: documentStyleSchema.optional(),
 });
 
 export async function saveCoverLetterAction(id: string, input: unknown): Promise<ActionResult<{ version: number }>> {
@@ -169,7 +173,7 @@ export async function saveCoverLetterAction(id: string, input: unknown): Promise
     const row = checkRow(
       await supabase
         .from("generated_cover_letters")
-        .update({ title: v.title, content: v.content, tone: v.tone })
+        .update({ title: v.title, content: v.content, tone: v.tone, ...(v.style ? { style: v.style } : {}) })
         .eq("id", uuid.parse(id))
         .eq("user_id", userId)
         .select("version, application_id")
@@ -184,12 +188,20 @@ export async function duplicateCoverLetterAction(id: string): Promise<ActionResu
   return runAction(async () => {
     const { supabase, userId } = await requireActiveUserForAction();
     const src = checkRow(
-      await supabase.from("generated_cover_letters").select("title, content, tone, application_id").eq("id", uuid.parse(id)).eq("user_id", userId).maybeSingle(),
+      await supabase.from("generated_cover_letters").select("title, content, tone, style, application_id").eq("id", uuid.parse(id)).eq("user_id", userId).maybeSingle(),
     );
     const row = checkRow(
       await supabase
         .from("generated_cover_letters")
-        .insert({ user_id: userId, application_id: src.application_id, title: `${src.title} (copy)`.slice(0, 200), content: src.content, tone: src.tone, origin: "duplicate" })
+        .insert({
+          user_id: userId,
+          application_id: src.application_id,
+          title: `${src.title} (copy)`.slice(0, 200),
+          content: src.content,
+          tone: src.tone,
+          style: src.style,
+          origin: "duplicate",
+        })
         .select("id")
         .single(),
     );

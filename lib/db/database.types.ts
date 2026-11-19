@@ -217,14 +217,14 @@ isOneToOne: false
                   ]
                 },"generated_cover_letters": {
                   Row: {
-                    "application_id": string | null,"content": string,"created_at": string,"id": string,"origin": string,"title": string,"tone": string,"updated_at": string,"user_id": string,"version": number
+                    "application_id": string | null,"content": string,"created_at": string,"id": string,"origin": string,"style": Json | null,"title": string,"tone": string,"updated_at": string,"user_id": string,"version": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "application_id"?: string | null,"content"?: string,"created_at"?: string,"id"?: string,"origin"?: string,"title": string,"tone"?: string,"updated_at"?: string,"user_id": string,"version"?: number
+                    "application_id"?: string | null,"content"?: string,"created_at"?: string,"id"?: string,"origin"?: string,"style"?: Json | null,"title": string,"tone"?: string,"updated_at"?: string,"user_id": string,"version"?: number
                   }
                   Update: {
-                    "application_id"?: string | null,"content"?: string,"created_at"?: string,"id"?: string,"origin"?: string,"title"?: string,"tone"?: string,"updated_at"?: string,"user_id"?: string,"version"?: number
+                    "application_id"?: string | null,"content"?: string,"created_at"?: string,"id"?: string,"origin"?: string,"style"?: Json | null,"title"?: string,"tone"?: string,"updated_at"?: string,"user_id"?: string,"version"?: number
                   }
                   Relationships: [
                     {

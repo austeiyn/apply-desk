@@ -205,6 +205,30 @@ try {
   step("cover letter generated with chosen tone, edited, saved and downloaded");
   await shot("cover-letter");
 
+  // Styles: a new letter matches the application's resume (styled Executive +
+  // Burgundy above); it can be changed, and downloads follow it.
+  const { data: styledLetter } = await admin.from("generated_cover_letters").select("style").eq("id", letterId).single();
+  assert(styledLetter.style?.template === "executive" && styledLetter.style?.accent === "burgundy", `letter matches the resume's style (${JSON.stringify(styledLetter.style)})`);
+  assert((await page.getByRole("radio", { name: "Executive" }).getAttribute("aria-checked")) === "true", "editor shows the matching style");
+  await page.getByRole("radio", { name: "Modern" }).click();
+  await page.getByRole("radio", { name: "Navy" }).click();
+  assert((await page.locator(".document-page").getAttribute("data-template")) === "modern", "letter preview switches template");
+  await shot("cover-letter-styles");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  let restyled = null;
+  for (let i = 0; i < 40 && restyled?.template !== "modern"; i++) {
+    await page.waitForTimeout(250);
+    restyled = (await admin.from("generated_cover_letters").select("style").eq("id", letterId).single()).data.style;
+  }
+  assert(restyled?.template === "modern" && restyled?.accent === "navy", `letter style saved (${JSON.stringify(restyled)})`);
+  const letterPdf = await PDFDocument.load(await (await page.request.get(`${BASE_URL}/api/documents/cover-letter/${letterId}?format=pdf`)).body());
+  const letterFonts = letterPdf.context
+    .enumerateIndirectObjects()
+    .map(([, o]) => (o instanceof PDFDict && o.get(PDFName.of("Subtype")) === PDFName.of("Type0") ? o.get(PDFName.of("BaseFont"))?.decodeText() : null))
+    .filter(Boolean);
+  assert(letterFonts.length > 0 && letterFonts.every((f) => f.includes("LiberationSans")), `letter PDF follows the new style (${letterFonts.join(", ")})`);
+  step("cover letters match the resume's style by default; the style can be changed and applies to downloads");
+
   // --- Interview prep ---------------------------------------------------------
   await page.goto(`${BASE_URL}/dashboard/applications/${appId}?tab=interview`);
   await page.getByRole("button", { name: "Generate interview preparation" }).click();

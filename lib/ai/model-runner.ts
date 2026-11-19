@@ -50,6 +50,7 @@ function errorCode(error: unknown): string {
   if (error instanceof Anthropic.NotFoundError) return "model_not_found";
   if (error instanceof Anthropic.BadRequestError) {
     const m = error.message.toLowerCase();
+    if (m.includes("credit balance")) return "out_of_credit";
     return m.includes("too long") || m.includes("too many tokens") || m.includes("context") ? "input_too_large" : "bad_request";
   }
   if (error instanceof Anthropic.APIConnectionError || error instanceof Anthropic.InternalServerError) return "upstream_unavailable";

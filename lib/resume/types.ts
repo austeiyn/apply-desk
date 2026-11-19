@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ACCENT_COLOURS, RESUME_TEMPLATES } from "@/lib/documents/templates";
+import { documentStyleSchema } from "@/lib/documents/templates";
 
 export const SECTION_KEYS = ["summary", "skills", "experience", "education", "certifications", "projects", "additional"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
@@ -81,7 +81,7 @@ export const ResumeContentSchema = z.object({
   section_order: z.array(z.enum(SECTION_KEYS)),
   hidden_sections: z.array(z.enum(SECTION_KEYS)),
   /** Visual style (template and accent). Optional: older resumes use Classic. */
-  style: z.object({ template: z.enum(RESUME_TEMPLATES), accent: z.enum(ACCENT_COLOURS).optional() }).optional(),
+  style: documentStyleSchema.optional(),
   meta: z
     .object({
       application_id: z.string().nullable().optional(),

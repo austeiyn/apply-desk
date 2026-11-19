@@ -13,7 +13,7 @@ import {
 } from "docx";
 import type { ResumeContent } from "@/lib/resume/types";
 import { coverLetterParagraphs, resumeBlocks, type LetterHeader } from "./layout";
-import { DOCX_FONT, INK_HEX, MUTED_HEX, resolveStyle, RULE_HEX, SUBTLE_HEX, TEMPLATE_SPECS, type TemplateSpec } from "./templates";
+import { DOCX_FONT, INK_HEX, MUTED_HEX, resolveStyle, RULE_HEX, SUBTLE_HEX, type ResumeStyle, type TemplateSpec } from "./templates";
 
 // A4 in twentieths of a point (twips). Margins, sizes and spacing come from
 // the template spec, in points. Liberation Sans/Serif (used for PDFs) are
@@ -28,8 +28,8 @@ const pt = (n: number) => Math.round(n * 2); // docx font sizes are half-points
 const tw = (n: number) => Math.round(n * 20); // spacing in twentieths of a point
 const lineRule = (multiple: number) => Math.round(240 * (multiple - 0.2)); // 240 = single spacing
 
-function baseDocument(sections: Paragraph[], meta: { title: string; author: string }, spec: TemplateSpec) {
-  const margin = tw(spec.margin);
+function baseDocument(sections: Paragraph[], meta: { title: string; author: string }, spec: TemplateSpec, marginPoints: number = spec.margin) {
+  const margin = tw(marginPoints);
   return new Document({
     title: meta.title,
     creator: meta.author,
@@ -140,21 +140,35 @@ export async function renderResumeDocx(content: ResumeContent, title: string): P
   return Packer.toBuffer(baseDocument(paragraphs, { title, author: content.contact.full_name }, spec));
 }
 
-export async function renderCoverLetterDocx(content: string, header: LetterHeader, title: string): Promise<Buffer> {
+export async function renderCoverLetterDocx(content: string, header: LetterHeader, title: string, style?: ResumeStyle): Promise<Buffer> {
+  const { spec, accentHex } = resolveStyle(style);
+  const letter = spec.letter;
+  const accent = hex(accentHex);
+  const alignment = spec.headerAlign === "center" ? AlignmentType.CENTER : AlignmentType.LEFT;
+  const body = pt(letter.bodySize);
+  const rule =
+    letter.headerRule === "none"
+      ? {}
+      : { border: { bottom: { style: BorderStyle.SINGLE, size: letter.headerRule === "accent" ? 10 : 5, color: letter.headerRule === "accent" ? accent : hex(RULE_HEX), space: 6 } } };
   const paragraphs: Paragraph[] = [
-    new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: header.fullName, bold: true, size: pt(16) })] }),
-    ...(header.contact ? [new Paragraph({ spacing: { after: 280 }, children: [new TextRun({ text: header.contact, size: pt(9.5), color: MUTED })] })] : []),
-    new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: header.date })] }),
-    ...header.recipient.map((line, i, arr) => new Paragraph({ spacing: { after: i === arr.length - 1 ? 200 : 0 }, children: [new TextRun({ text: line })] })),
+    new Paragraph({ alignment, spacing: { after: 40 }, children: [new TextRun({ text: header.fullName, bold: true, size: pt(letter.nameSize), color: accent })] }),
+    new Paragraph({
+      alignment,
+      spacing: { after: 360 },
+      ...rule,
+      children: header.contact ? [new TextRun({ text: header.contact, size: pt(spec.size.contact), color: MUTED })] : [],
+    }),
+    new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: header.date, size: body })] }),
+    ...header.recipient.map((line, i, arr) => new Paragraph({ spacing: { after: i === arr.length - 1 ? 200 : 0 }, children: [new TextRun({ text: line, size: body })] })),
   ];
   for (const para of coverLetterParagraphs(content)) {
     const lines = para.split("\n");
     paragraphs.push(
       new Paragraph({
-        spacing: { after: 180, line: 276 },
-        children: lines.flatMap((line, i) => (i === 0 ? [new TextRun({ text: line })] : [new TextRun({ text: line, break: 1 })])),
+        spacing: { after: tw(letter.paragraphGap + 1), line: 276 },
+        children: lines.flatMap((line, i) => (i === 0 ? [new TextRun({ text: line, size: body })] : [new TextRun({ text: line, size: body, break: 1 })])),
       }),
     );
   }
-  return Packer.toBuffer(baseDocument(paragraphs, { title, author: header.fullName }, TEMPLATE_SPECS.classic));
+  return Packer.toBuffer(baseDocument(paragraphs, { title, author: header.fullName }, spec, letter.margin));
 }

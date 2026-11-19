@@ -12,6 +12,7 @@ export type AiErrorCode =
   | "upstream_rate_limited"
   | "upstream_unavailable"
   | "upstream_error"
+  | "out_of_credit"
   | "not_found"
   | "invalid_input";
 
@@ -30,6 +31,7 @@ const MESSAGES: Record<AiErrorCode, string> = {
   upstream_rate_limited: "The AI service is busy right now. Please try again in a minute.",
   upstream_unavailable: "The AI service is temporarily unavailable. Please try again shortly.",
   upstream_error: "Something went wrong while generating. Please try again.",
+  out_of_credit: "AI features are paused because the platform's Claude API credit has run out. The administrator needs to add credit in the Claude Console.",
   not_found: "We couldn't find that item. It may have been deleted.",
   invalid_input: "Some required information is missing.",
 };

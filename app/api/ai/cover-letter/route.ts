@@ -22,6 +22,7 @@ export async function POST(request: Request) {
 
     // Use the chosen (or latest) tailored resume for this application as context.
     let resume: ResumeContent | null = null;
+    // Letters match the resume they go with (see lib/data/documents.ts).
     const query = supabase.from("generated_resumes").select("content_json").eq("user_id", userId).eq("application_id", application.id);
     const { data: resumeRow } = body.resumeId
       ? await query.eq("id", body.resumeId).maybeSingle()
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
       const title = ["Cover letter", application.job_title, application.company_name].filter(Boolean).join(" – ").slice(0, 200);
       const { data, error } = await supabase
         .from("generated_cover_letters")
-        .insert({ user_id: userId, application_id: application.id, title, content, tone: body.tone, origin: "ai" })
+        .insert({ user_id: userId, application_id: application.id, title, content, tone: body.tone, style: resume?.style ?? null, origin: "ai" })
         .select("id")
         .single();
       if (error || !data) throw error ?? new Error("Insert failed");
