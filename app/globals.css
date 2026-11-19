@@ -2,35 +2,41 @@
 @import "tw-animate-css";
 
 /*
- * ApplyDesk design tokens.
- * Warm neutral surfaces, deep navy text, a restrained teal accent.
+ * ApplyDesk design tokens: "Confetti".
+ * A deep indigo ink and a confident grape-violet brand colour on soft lavender
+ * surfaces, with five playful accents (coral, sun, mint, ocean, bloom) used for
+ * navigation, statuses, charts and highlights. Colour carries meaning and
+ * delight, but text always sits on tokens that meet WCAG AA (checked when the
+ * palette was chosen): use the 700 step for text on a 50 tint, never the 500.
  * The product ships a single light theme (documents are printed on white).
  */
 :root {
-  --background: #faf9f6;
-  --foreground: #0f1a2b;
+  --background: #f8f7ff;
+  --foreground: #17143a;
   --card: #ffffff;
-  --card-foreground: #0f1a2b;
+  --card-foreground: #17143a;
   --popover: #ffffff;
-  --popover-foreground: #0f1a2b;
-  --primary: #13233d;
+  --popover-foreground: #17143a;
+  --primary: #5b3fe4;
   --primary-foreground: #ffffff;
-  --secondary: #f1f0ec;
-  --secondary-foreground: #13233d;
-  --muted: #f3f2ee;
-  --muted-foreground: #5a6372;
-  --accent: #e8f3f1;
-  --accent-foreground: #0b5e58;
-  --brand: #0f766e;
+  --secondary: #efecfb;
+  --secondary-foreground: #2b2470;
+  --muted: #f1effb;
+  --muted-foreground: #5b5878;
+  --accent: #f0ecff;
+  --accent-foreground: #3f2aa8;
+  --brand: #5b3fe4;
   --brand-foreground: #ffffff;
+  --ink: #17143a;
+  --ink-foreground: #ffffff;
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
   --success: #067647;
   --warning: #b54708;
-  --border: #e6e3dc;
-  --input: #dcd9d1;
-  --ring: #0f766e;
-  --radius: 0.625rem;
+  --border: #e6e2f5;
+  --input: #d9d4ee;
+  --ring: #5b3fe4;
+  --radius: 0.75rem;
   --sidebar: #ffffff;
 }
 
@@ -51,6 +57,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
@@ -65,6 +73,52 @@
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Brand hue scales. 50 = tint, 200 = ring, 500 = fill, 600 = icon on white, 700 = text on a 50 tint. */
+  --color-grape-50: #f0ecff;
+  --color-grape-100: #e2daff;
+  --color-grape-200: #cbbeff;
+  --color-grape-300: #b3a1ff;
+  --color-grape-400: #8b6cff;
+  --color-grape-500: #5b3fe4;
+  --color-grape-600: #4a31c8;
+  --color-grape-700: #3f2aa8;
+  --color-grape-900: #241673;
+  --color-coral-50: #ffeeea;
+  --color-coral-100: #ffddd5;
+  --color-coral-200: #ffc2b5;
+  --color-coral-400: #ff8a78;
+  --color-coral-500: #ff6a55;
+  --color-coral-600: #e0472f;
+  --color-coral-700: #b3361f;
+  --color-sun-50: #fff5d6;
+  --color-sun-100: #ffebb0;
+  --color-sun-200: #ffdd80;
+  --color-sun-400: #ffc83d;
+  --color-sun-500: #f5b400;
+  --color-sun-600: #b87a00;
+  --color-sun-700: #7a4e00;
+  --color-mint-50: #ddf7ef;
+  --color-mint-100: #bdefe0;
+  --color-mint-200: #8ee3cb;
+  --color-mint-400: #4bd3b0;
+  --color-mint-500: #19c39a;
+  --color-mint-600: #0b8f70;
+  --color-mint-700: #0a6650;
+  --color-ocean-50: #e1f0ff;
+  --color-ocean-100: #c4e0ff;
+  --color-ocean-200: #9bcbff;
+  --color-ocean-400: #62b4ff;
+  --color-ocean-500: #3aa0ff;
+  --color-ocean-600: #1c7fe0;
+  --color-ocean-700: #0b58a8;
+  --color-bloom-50: #ffe7f2;
+  --color-bloom-100: #ffd0e5;
+  --color-bloom-200: #ffadd0;
+  --color-bloom-400: #ff86bd;
+  --color-bloom-500: #ff5fa8;
+  --color-bloom-600: #e03b88;
+  --color-bloom-700: #a8225c;
 }
 
 @layer base {
@@ -81,7 +135,7 @@
     font-feature-settings: "cv11", "ss01";
   }
   ::selection {
-    background: color-mix(in srgb, var(--brand) 18%, transparent);
+    background: color-mix(in srgb, var(--brand) 20%, transparent);
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -110,4 +164,38 @@
   color: #111827;
   font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
   line-height: 1.32;
+}
+
+/* Brand flourishes ---------------------------------------------------------- */
+
+/* Soft pastel glow behind hero areas. */
+.bg-aurora {
+  background-image:
+    radial-gradient(40rem 26rem at 8% -10%, color-mix(in srgb, var(--color-grape-400) 26%, transparent), transparent 60%),
+    radial-gradient(34rem 24rem at 98% 4%, color-mix(in srgb, var(--color-bloom-400) 24%, transparent), transparent 60%),
+    radial-gradient(30rem 20rem at 60% 108%, color-mix(in srgb, var(--color-sun-400) 22%, transparent), transparent 62%),
+    radial-gradient(26rem 18rem at 0% 100%, color-mix(in srgb, var(--color-mint-400) 18%, transparent), transparent 62%);
+}
+
+/* Gradient text for one or two headline words (large text only). */
+.text-gradient {
+  background-image: linear-gradient(100deg, var(--color-grape-500) 10%, var(--color-bloom-600) 60%, var(--color-coral-600) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Deep indigo panels (auth side panel, feature band, call to action). */
+.bg-ink-panel {
+  color: #fff;
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(28rem 18rem at 100% 0%, color-mix(in srgb, var(--color-grape-400) 38%, transparent), transparent 62%),
+    radial-gradient(24rem 16rem at 0% 100%, color-mix(in srgb, var(--color-bloom-500) 26%, transparent), transparent 62%),
+    radial-gradient(18rem 12rem at 85% 95%, color-mix(in srgb, var(--color-sun-400) 18%, transparent), transparent 62%);
+}
+
+/* Rainbow hairline, used sparingly as a signature accent. */
+.bg-confetti-line {
+  background-image: linear-gradient(90deg, var(--color-grape-500), var(--color-bloom-500), var(--color-coral-500), var(--color-sun-400), var(--color-mint-500), var(--color-ocean-500));
 }

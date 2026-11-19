@@ -35,7 +35,7 @@ export function UserAdminActions({ userId, email, status }: { userId: string; em
           <UserCheck /> Reactivate
         </Button>
       )}
-      <Button variant="ghost" className="text-destructive hover:bg-rose-50 hover:text-destructive" onClick={() => setMode("delete")}>
+      <Button variant="ghost" className="text-destructive hover:bg-coral-50 hover:text-destructive" onClick={() => setMode("delete")}>
         <Trash2 /> Delete
       </Button>
       <Dialog open={mode !== null} onOpenChange={(o) => !o && setMode(null)}>

@@ -27,8 +27,8 @@ function Progress({ className, value, indicatorClassName, ...props }: React.Comp
   return (
     <ProgressPrimitive.Root className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)} value={value} {...props}>
       <ProgressPrimitive.Indicator
-        className={cn("h-full w-full flex-1 rounded-full bg-brand transition-transform", indicatorClassName)}
-        style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
+        className={cn("h-full rounded-full transition-[width]", indicatorClassName ?? "bg-gradient-to-r from-grape-500 via-bloom-500 to-coral-500")}
+        style={{ width: `${Math.min(100, Math.max(0, value ?? 0))}%` }}
       />
     </ProgressPrimitive.Root>
   );
@@ -87,7 +87,7 @@ function Avatar({ className, initials, src, alt = "" }: { className?: string; in
   return (
     <AvatarPrimitive.Root className={cn("relative flex size-8 shrink-0 overflow-hidden rounded-full", className)}>
       {src ? <AvatarPrimitive.Image src={src} alt={alt} className="aspect-square size-full object-cover" /> : null}
-      <AvatarPrimitive.Fallback className="flex size-full items-center justify-center bg-accent text-xs font-semibold text-accent-foreground">
+      <AvatarPrimitive.Fallback className="flex size-full items-center justify-center bg-gradient-to-br from-grape-100 to-bloom-100 text-xs font-semibold text-grape-700">
         {initials}
       </AvatarPrimitive.Fallback>
     </AvatarPrimitive.Root>

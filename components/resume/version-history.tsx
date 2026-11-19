@@ -95,8 +95,8 @@ export function VersionHistory({
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm">
-                    <span className="rounded bg-rose-50 px-1 text-rose-700 line-through">Version {selected}</span> →{" "}
-                    <span className="rounded bg-emerald-50 px-1 text-emerald-800">editor</span>
+                    <span className="rounded bg-coral-50 px-1 text-coral-700 line-through">Version {selected}</span> →{" "}
+                    <span className="rounded bg-mint-50 px-1 text-mint-700">editor</span>
                   </p>
                   {selected !== currentVersion ? (
                     <Button size="sm" onClick={() => restore.run(resumeId, selected)} loading={restore.pending}>
@@ -112,8 +112,8 @@ export function VersionHistory({
                       key={i}
                       className={cn(
                         "whitespace-pre-wrap px-1",
-                        d.type === "add" && "bg-emerald-50 text-emerald-900",
-                        d.type === "del" && "bg-rose-50 text-rose-800 line-through",
+                        d.type === "add" && "bg-mint-50 text-mint-700",
+                        d.type === "del" && "bg-coral-50 text-coral-700 line-through",
                         d.type === "same" && "text-muted-foreground",
                       )}
                     >

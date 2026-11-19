@@ -72,6 +72,8 @@ try {
   candPage = c.page;
   const r = await c.page.goto(`${BASE_URL}/admin`);
   assert(r.status() === 404, "candidate gets 404 for /admin");
+  // The branded 404 page (app/not-found.tsx) says nothing about what exists.
+  assert(await c.page.getByRole("heading", { name: "We couldn't find that page" }).isVisible(), "branded 404 page is shown");
   const rpc = await c.page.request.post(`${BASE_URL}/admin/users`).catch(() => null);
   void rpc;
   step("non-admins can't reach the admin console (404)");

@@ -10,23 +10,23 @@ const points = [
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-primary-foreground lg:flex">
-        <Logo className="text-primary-foreground [&_rect]:fill-white/10" />
+      <aside className="bg-ink-panel relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
+        <div aria-hidden className="bg-confetti-line absolute inset-x-0 top-0 h-1" />
+        <Logo tone="light" />
         <div className="relative z-10 max-w-md space-y-6">
           <p className="text-2xl font-semibold leading-snug tracking-tight">
             One job advertisement. One intelligent workspace. Everything you need to apply professionally.
           </p>
-          <ul className="space-y-3 text-sm text-primary-foreground/80">
+          <ul className="space-y-3 text-sm text-white/85">
             {points.map((p) => (
               <li key={p} className="flex items-start gap-2.5">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-teal-300" />
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-mint-400" />
                 {p}
               </li>
             ))}
           </ul>
         </div>
-        <p className="relative z-10 text-xs text-primary-foreground/50">Your data stays private to your account.</p>
-        <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-32 size-96 rounded-full bg-teal-400/10 blur-3xl" />
+        <p className="relative z-10 text-xs text-white/60">Your data stays private to your account.</p>
       </aside>
       <main className="flex flex-col px-4 py-8 sm:px-8">
         <div className="lg:hidden">

@@ -15,16 +15,16 @@ import type { StoredJobAnalysis } from "@/lib/ai/job-analyser";
 import { cn, relativeTime } from "@/lib/utils";
 
 const MATCH = {
-  strong: { label: "Strong match", icon: CheckCircle2, className: "bg-emerald-50 text-emerald-800 ring-emerald-200" },
-  partial: { label: "Partial match", icon: CircleDashed, className: "bg-amber-50 text-amber-800 ring-amber-200" },
+  strong: { label: "Strong match", icon: CheckCircle2, className: "bg-mint-50 text-mint-700 ring-mint-200" },
+  partial: { label: "Partial match", icon: CircleDashed, className: "bg-sun-50 text-sun-700 ring-sun-200" },
   not_evidenced: { label: "Not evidenced", icon: HelpCircle, className: "bg-slate-100 text-slate-700 ring-slate-200" },
-  missing_qualification: { label: "Missing qualification", icon: XCircle, className: "bg-rose-50 text-rose-700 ring-rose-200" },
+  missing_qualification: { label: "Missing qualification", icon: XCircle, className: "bg-coral-50 text-coral-700 ring-coral-200" },
 } as const;
 
 const RATING = {
-  strong: { label: "Strong fit", className: "bg-emerald-600" },
-  good: { label: "Good fit", className: "bg-teal-600" },
-  moderate: { label: "Moderate fit", className: "bg-amber-500" },
+  strong: { label: "Strong fit", className: "bg-mint-600" },
+  good: { label: "Good fit", className: "bg-grape-500" },
+  moderate: { label: "Moderate fit", className: "bg-sun-500" },
   limited: { label: "Limited fit", className: "bg-slate-500" },
 } as const;
 
@@ -221,8 +221,8 @@ export function AnalysisPanel({
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <ListCard title="Your strengths for this role" items={analysis.strengths} icon={CheckCircle2} tone="text-emerald-600" />
-        <ListCard title="Potential gaps" items={analysis.gaps} icon={TriangleAlert} tone="text-amber-600" />
+        <ListCard title="Your strengths for this role" items={analysis.strengths} icon={CheckCircle2} tone="text-mint-600" />
+        <ListCard title="Potential gaps" items={analysis.gaps} icon={TriangleAlert} tone="text-sun-600" />
       </div>
 
       {analysis.clarifying_questions.length ? (
@@ -269,8 +269,8 @@ export function AnalysisPanel({
 
       {analysis.job.key_phrases.length || analysis.job.differentiators.length ? (
         <div className="grid gap-6 lg:grid-cols-2">
-          <ListCard title="Phrases the employer uses" items={analysis.job.key_phrases} icon={Sparkles} tone="text-sky-600" />
-          <ListCard title="What could set applicants apart" items={analysis.job.differentiators} icon={Sparkles} tone="text-violet-600" />
+          <ListCard title="Phrases the employer uses" items={analysis.job.key_phrases} icon={Sparkles} tone="text-ocean-600" />
+          <ListCard title="What could set applicants apart" items={analysis.job.differentiators} icon={Sparkles} tone="text-grape-600" />
         </div>
       ) : null}
     </div>

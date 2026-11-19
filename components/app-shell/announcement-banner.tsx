@@ -52,9 +52,9 @@ const dismissedStore = {
 };
 
 const styles: Record<string, { box: string; icon: typeof Info }> = {
-  info: { box: "border-sky-200 bg-sky-50 text-sky-900", icon: Info },
-  success: { box: "border-emerald-200 bg-emerald-50 text-emerald-900", icon: CheckCircle2 },
-  warning: { box: "border-amber-200 bg-amber-50 text-amber-900", icon: TriangleAlert },
+  info: { box: "border-ocean-200 bg-ocean-50 text-ocean-700", icon: Info },
+  success: { box: "border-mint-200 bg-mint-50 text-mint-700", icon: CheckCircle2 },
+  warning: { box: "border-sun-200 bg-sun-50 text-sun-700", icon: TriangleAlert },
 };
 
 /** Active platform announcements. */

@@ -18,7 +18,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/misc";
 import { cn, initials } from "@/lib/utils";
-import { adminNav, candidateNav, isActive, type NavItem } from "./nav-config";
+import { adminNav, candidateNav, isActive, type NavItem, type NavTone } from "./nav-config";
+
+/** Per-section colours: a tinted icon tile, and a matching highlight for the current page. */
+const TONE_CLASSES: Record<NavTone, { icon: string; active: string }> = {
+  grape: { icon: "bg-grape-50 text-grape-600", active: "bg-grape-50 text-grape-700" },
+  coral: { icon: "bg-coral-50 text-coral-600", active: "bg-coral-50 text-coral-700" },
+  mint: { icon: "bg-mint-50 text-mint-600", active: "bg-mint-50 text-mint-700" },
+  ocean: { icon: "bg-ocean-50 text-ocean-600", active: "bg-ocean-50 text-ocean-700" },
+  bloom: { icon: "bg-bloom-50 text-bloom-600", active: "bg-bloom-50 text-bloom-700" },
+  slate: { icon: "bg-slate-100 text-slate-600", active: "bg-slate-100 text-slate-800" },
+};
 
 interface ShellUser {
   fullName: string;
@@ -39,11 +49,13 @@ function NavList({ items, pathname, onNavigate }: { items: NavItem[]; pathname: 
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13.5px] font-medium transition-colors",
-              active ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              "group flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13.5px] font-medium transition-colors",
+              active ? TONE_CLASSES[item.tone].active : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <Icon className={cn("size-4 shrink-0", active ? "text-brand" : "text-muted-foreground/80 group-hover:text-foreground")} />
+            <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-md transition-colors", TONE_CLASSES[item.tone].icon, !active && "opacity-80 group-hover:opacity-100")}>
+              <Icon className="size-4" />
+            </span>
             {item.label}
           </Link>
         );
@@ -124,7 +136,7 @@ export function AppShell({
       <div className="flex items-center gap-2 px-1.5 pt-1">
         <Logo href={home} />
         {area === "admin" ? (
-          <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+          <span className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-foreground">
             Admin
           </span>
         ) : null}

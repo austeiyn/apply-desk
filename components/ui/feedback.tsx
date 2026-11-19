@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 
 /* Alert -------------------------------------------------------------------- */
 const alertStyles = {
-  info: { box: "border-sky-200 bg-sky-50 text-sky-900", icon: Info },
-  success: { box: "border-emerald-200 bg-emerald-50 text-emerald-900", icon: CheckCircle2 },
-  warning: { box: "border-amber-200 bg-amber-50 text-amber-900", icon: TriangleAlert },
-  error: { box: "border-rose-200 bg-rose-50 text-rose-900", icon: AlertCircle },
+  info: { box: "border-ocean-200 bg-ocean-50 text-ocean-700", icon: Info },
+  success: { box: "border-mint-200 bg-mint-50 text-mint-700", icon: CheckCircle2 },
+  warning: { box: "border-sun-200 bg-sun-50 text-sun-700", icon: TriangleAlert },
+  error: { box: "border-coral-200 bg-coral-50 text-coral-700", icon: AlertCircle },
   neutral: { box: "border-border bg-muted/60 text-foreground", icon: Info },
 } as const;
 
@@ -121,26 +121,41 @@ function TD({ className, ...props }: React.ComponentProps<"td">) {
 }
 
 /* Stat --------------------------------------------------------------------- */
+const STAT_TONES = {
+  grape: "bg-grape-50 text-grape-700",
+  coral: "bg-coral-50 text-coral-700",
+  sun: "bg-sun-100 text-sun-700",
+  mint: "bg-mint-50 text-mint-700",
+  ocean: "bg-ocean-50 text-ocean-700",
+  bloom: "bg-bloom-50 text-bloom-700",
+} as const;
+
 function Stat({
   label,
   value,
   hint,
   icon: Icon,
+  tone = "grape",
   className,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: React.ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
+  tone?: keyof typeof STAT_TONES;
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(15,26,43,0.04)]", className)}>
-      <div className="flex items-center justify-between gap-2">
+    <div className={cn("flex flex-col justify-between rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,58,0.04)]", className)}>
+      <div className="flex items-start justify-between gap-2">
         <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
-        {Icon ? <Icon className="size-4 text-muted-foreground/70" /> : null}
+        {Icon ? (
+          <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg", STAT_TONES[tone])}>
+            <Icon className="size-4" />
+          </span>
+        ) : null}
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
+      <p className="mt-3 text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
       {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );

@@ -14,15 +14,20 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
+/**
+ * Pipeline colours, left to right: slate (not started) -> sun, ocean, grape,
+ * bloom, coral, cyan (in motion) -> mint (offer). Rose and zinc close it out.
+ * Text is always the 700 step on a 50 tint (WCAG AA).
+ */
 export const STATUS_META: Record<ApplicationStatus, { label: string; dot: string; badge: string }> = {
   interested: { label: "Interested", dot: "bg-slate-400", badge: "bg-slate-100 text-slate-700 ring-slate-200" },
-  preparing: { label: "Preparing Application", dot: "bg-amber-500", badge: "bg-amber-50 text-amber-800 ring-amber-200" },
-  ready: { label: "Ready to Apply", dot: "bg-sky-500", badge: "bg-sky-50 text-sky-800 ring-sky-200" },
-  applied: { label: "Applied", dot: "bg-blue-600", badge: "bg-blue-50 text-blue-800 ring-blue-200" },
-  screening: { label: "Screening", dot: "bg-indigo-500", badge: "bg-indigo-50 text-indigo-800 ring-indigo-200" },
-  interview: { label: "Interview", dot: "bg-violet-500", badge: "bg-violet-50 text-violet-800 ring-violet-200" },
-  assessment: { label: "Assessment", dot: "bg-fuchsia-500", badge: "bg-fuchsia-50 text-fuchsia-800 ring-fuchsia-200" },
-  offer: { label: "Offer", dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200" },
+  preparing: { label: "Preparing Application", dot: "bg-sun-500", badge: "bg-sun-50 text-sun-700 ring-sun-200" },
+  ready: { label: "Ready to Apply", dot: "bg-ocean-500", badge: "bg-ocean-50 text-ocean-700 ring-ocean-200" },
+  applied: { label: "Applied", dot: "bg-grape-500", badge: "bg-grape-50 text-grape-700 ring-grape-200" },
+  screening: { label: "Screening", dot: "bg-bloom-500", badge: "bg-bloom-50 text-bloom-700 ring-bloom-200" },
+  interview: { label: "Interview", dot: "bg-coral-500", badge: "bg-coral-50 text-coral-700 ring-coral-200" },
+  assessment: { label: "Assessment", dot: "bg-cyan-500", badge: "bg-cyan-50 text-cyan-800 ring-cyan-200" },
+  offer: { label: "Offer", dot: "bg-mint-500", badge: "bg-mint-50 text-mint-700 ring-mint-200" },
   rejected: { label: "Rejected", dot: "bg-rose-400", badge: "bg-rose-50 text-rose-700 ring-rose-200" },
   withdrawn: { label: "Withdrawn", dot: "bg-zinc-400", badge: "bg-zinc-100 text-zinc-600 ring-zinc-200" },
 };

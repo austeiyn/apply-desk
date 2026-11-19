@@ -8,11 +8,11 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "bg-muted text-foreground ring-border",
-        brand: "bg-accent text-accent-foreground ring-teal-200",
-        success: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-        warning: "bg-amber-50 text-amber-800 ring-amber-200",
-        danger: "bg-rose-50 text-rose-700 ring-rose-200",
-        info: "bg-sky-50 text-sky-800 ring-sky-200",
+        brand: "bg-grape-50 text-grape-700 ring-grape-200",
+        success: "bg-mint-50 text-mint-700 ring-mint-200",
+        warning: "bg-sun-50 text-sun-700 ring-sun-200",
+        danger: "bg-coral-50 text-coral-700 ring-coral-200",
+        info: "bg-ocean-50 text-ocean-700 ring-ocean-200",
         outline: "bg-transparent text-muted-foreground ring-border",
       },
     },

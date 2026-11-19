@@ -31,6 +31,12 @@ import { firstName, formatDate, formatDateTime, relativeTime } from "@/lib/utils
 export const metadata: Metadata = { title: "Dashboard" };
 
 const UPCOMING_ICONS = { interview: CalendarClock, follow_up: Clock, deadline: Flag, next_action: ListChecks } as const;
+const UPCOMING_TONES = {
+  interview: "bg-coral-50 text-coral-600",
+  follow_up: "bg-ocean-50 text-ocean-600",
+  deadline: "bg-sun-100 text-sun-700",
+  next_action: "bg-grape-50 text-grape-600",
+} as const;
 
 export default async function DashboardPage() {
   const { supabase, userId, profile } = await requireUser();
@@ -61,12 +67,12 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Stat label="Total applications" value={data.stats.total} icon={Briefcase} />
-        <Stat label="In progress" value={data.stats.inProgress} icon={ListChecks} />
-        <Stat label="Interviews scheduled" value={data.stats.interviewsScheduled} icon={CalendarDays} />
-        <Stat label="Offers received" value={data.stats.offers} icon={Handshake} />
-        <Stat label="Resumes created" value={data.stats.resumes} icon={FileText} />
-        <Stat label="Cover letters" value={data.stats.coverLetters} icon={ScrollText} />
+        <Stat label="Total applications" value={data.stats.total} icon={Briefcase} tone="grape" />
+        <Stat label="In progress" value={data.stats.inProgress} icon={ListChecks} tone="ocean" />
+        <Stat label="Interviews scheduled" value={data.stats.interviewsScheduled} icon={CalendarDays} tone="coral" />
+        <Stat label="Offers received" value={data.stats.offers} icon={Handshake} tone="mint" />
+        <Stat label="Resumes created" value={data.stats.resumes} icon={FileText} tone="bloom" />
+        <Stat label="Cover letters" value={data.stats.coverLetters} icon={ScrollText} tone="sun" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -140,7 +146,9 @@ export default async function DashboardPage() {
                     return (
                       <li key={`${u.href}-${i}`}>
                         <Link href={u.href} className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2 hover:bg-muted/50">
-                          <Icon className="mt-0.5 size-4 shrink-0 text-brand" />
+                          <span className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md ${UPCOMING_TONES[u.kind]}`}>
+                            <Icon className="size-4" />
+                          </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">{u.title}</p>
                             <p className="truncate text-xs text-muted-foreground">{u.subtitle}</p>

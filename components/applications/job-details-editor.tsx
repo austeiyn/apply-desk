@@ -49,7 +49,7 @@ export function JobDetailsEditor({ application }: { application: JobApplication 
           description="The application, its analysis, interview prep, notes and timeline will be permanently deleted. Resumes and cover letters stay in your library."
           onConfirm={() => remove.run(application.id)}
         >
-          <Button type="button" variant="ghost" className="text-destructive hover:bg-rose-50 hover:text-destructive">
+          <Button type="button" variant="ghost" className="text-destructive hover:bg-coral-50 hover:text-destructive">
             <Trash2 /> Delete application
           </Button>
         </ConfirmButton>

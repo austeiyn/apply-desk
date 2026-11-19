@@ -1,4 +1,32 @@
-<h2>Reset your ApplyDesk password</h2>
-<p>We received a request to reset your password. This link expires in one hour.</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password">Choose a new password</a></p>
-<p>If you didn't request a password reset, you can ignore this email; your password won't change.</p>
+<!-- ApplyDesk email: inline styles only (email clients ignore stylesheets and scripts). -->
+<div style="margin:0;padding:32px 16px;background:#f8f7ff;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#17143a">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto">
+    <tr>
+      <td style="padding:0 0 16px">
+        <span style="display:inline-block;width:30px;height:30px;border-radius:9px;background:#5b3fe4;color:#ffffff;font-size:17px;font-weight:700;line-height:30px;text-align:center;vertical-align:middle">A</span>
+        <span style="margin-left:8px;font-size:19px;font-weight:700;letter-spacing:-0.01em;vertical-align:middle">Apply<span style="color:#5b3fe4">Desk</span></span>
+      </td>
+    </tr>
+    <tr>
+      <td style="background:#ffffff;border:1px solid #e6e2f5;border-radius:16px;overflow:hidden">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td height="4" bgcolor="#5b3fe4" style="font-size:0;line-height:0">&nbsp;</td>
+          <td height="4" bgcolor="#ff5fa8" style="font-size:0;line-height:0">&nbsp;</td>
+          <td height="4" bgcolor="#ff6a55" style="font-size:0;line-height:0">&nbsp;</td>
+          <td height="4" bgcolor="#ffc83d" style="font-size:0;line-height:0">&nbsp;</td>
+          <td height="4" bgcolor="#19c39a" style="font-size:0;line-height:0">&nbsp;</td>
+          <td height="4" bgcolor="#3aa0ff" style="font-size:0;line-height:0">&nbsp;</td>
+        </tr></table>
+        <div style="padding:28px">
+          <h2 style="margin:0 0 12px;font-size:22px;line-height:1.25;letter-spacing:-0.01em;color:#17143a">Reset your ApplyDesk password</h2>
+          <p style="margin:0 0 12px;font-size:15px;line-height:1.55;color:#17143a">We received a request to reset your password. This link expires in one hour.</p>
+          <p style="margin:24px 0"><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password" style="display:inline-block;background:#5b3fe4;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">Choose a new password</a></p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#5b5878">Button not working? Copy this link into your browser:<br><span style="word-break:break-all;color:#4a31c8">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password</span></p>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 4px;font-size:12px;line-height:1.5;color:#5b5878">If you didn't request a password reset, you can ignore this email; your password won't change.</td>
+    </tr>
+  </table>
+</div>

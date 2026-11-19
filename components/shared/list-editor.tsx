@@ -53,7 +53,7 @@ export function ListEditor({
           </div>
           <button
             type="button"
-            className="mt-1.5 rounded p-1 text-muted-foreground opacity-70 hover:bg-rose-50 hover:text-destructive group-hover:opacity-100"
+            className="mt-1.5 rounded p-1 text-muted-foreground opacity-70 hover:bg-coral-50 hover:text-destructive group-hover:opacity-100"
             onClick={() => onChange(value.filter((_, j) => j !== i))}
             aria-label={`Remove ${label.toLowerCase()} ${i + 1}`}
           >

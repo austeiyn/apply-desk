@@ -198,7 +198,7 @@ export function SettingsView({
         </CardFooter>
       </Card>
 
-      <Card className="border-rose-200">
+      <Card className="border-coral-200">
         <CardHeader>
           <CardTitle className="text-destructive">Delete account</CardTitle>
           <CardDescription>

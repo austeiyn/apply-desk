@@ -3,7 +3,7 @@ import { TriangleAlert } from "lucide-react";
 export function LegalPage({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
-      <div className="mb-8 flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" role="note">
+      <div className="mb-8 flex gap-3 rounded-lg border border-sun-200 bg-sun-50 p-4 text-sm text-sun-700" role="note">
         <TriangleAlert className="mt-0.5 size-4 shrink-0" />
         <p>
           <strong>Draft for review — not legal advice.</strong> This placeholder text describes how ApplyDesk is built to handle data. The

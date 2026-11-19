@@ -102,7 +102,7 @@ function MaterialBody({ m }: { m: ApplicationMaterial }) {
       return (
         <div className="grid gap-4 md:grid-cols-2">
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-emerald-700">Verified strengths</h4>
+            <h4 className="text-sm font-semibold text-mint-700">Verified strengths</h4>
             <ul className="space-y-1.5 text-sm">
               {g.existing_strengths?.map((s, i) => (
                 <li key={i}>
@@ -112,7 +112,7 @@ function MaterialBody({ m }: { m: ApplicationMaterial }) {
             </ul>
           </section>
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-amber-700">Partially matched</h4>
+            <h4 className="text-sm font-semibold text-sun-700">Partially matched</h4>
             <ul className="space-y-1.5 text-sm">
               {g.partial_matches?.map((s, i) => (
                 <li key={i}>
@@ -122,7 +122,7 @@ function MaterialBody({ m }: { m: ApplicationMaterial }) {
             </ul>
           </section>
           <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-rose-700">Missing</h4>
+            <h4 className="text-sm font-semibold text-coral-700">Missing</h4>
             <ul className="space-y-1.5 text-sm">
               {g.missing_skills?.map((s, i) => (
                 <li key={i}>

@@ -18,7 +18,7 @@ export default async function SuspendedPage() {
     <div className="flex min-h-dvh flex-col items-center justify-center gap-8 px-4">
       <Logo />
       <div className="w-full max-w-md space-y-4 rounded-xl border bg-card p-6 text-center shadow-sm">
-        <div className="mx-auto flex size-11 items-center justify-center rounded-full bg-rose-50 text-rose-700">
+        <div className="mx-auto flex size-11 items-center justify-center rounded-full bg-coral-50 text-coral-700">
           <ShieldAlert className="size-5" />
         </div>
         <h1 className="text-lg font-semibold">Your account is suspended</h1>

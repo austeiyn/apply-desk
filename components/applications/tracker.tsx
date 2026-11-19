@@ -155,8 +155,9 @@ function KanbanColumn({ status, items, onStatus }: { status: ApplicationStatus; 
     <section
       ref={setNodeRef}
       aria-label={`${meta.label} column`}
-      className={cn("flex w-72 shrink-0 flex-col rounded-xl border bg-muted/40 transition-colors", isOver && "border-brand/50 bg-accent/50")}
+      className={cn("relative flex w-72 shrink-0 flex-col overflow-hidden rounded-xl border bg-muted/40 transition-colors", isOver && "border-brand/50 bg-accent/50")}
     >
+      <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", meta.dot)} />
       <header className="flex items-center justify-between px-3 py-2.5">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
           <span className={cn("size-2 rounded-full", meta.dot)} aria-hidden /> {meta.label}

@@ -42,14 +42,14 @@ export default async function AdminOverviewPage() {
       <PageHeader title="Platform overview" description="Aggregated platform activity. Candidate documents, CVs and notes are never shown here." />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Total users" value={stats.total_users} hint={`${stats.total_candidates} candidates · ${stats.total_admins} admins`} icon={Users} />
-        <Stat label="New this month" value={stats.new_users_this_month} hint={`${stats.new_users_last_month} last month`} icon={UserPlus} />
-        <Stat label="Active users (30 days)" value={stats.active_users_30d} hint={`${stats.active_users_7d} in the last 7 days`} icon={Activity} />
-        <Stat label="Suspended" value={stats.suspended_users} icon={TriangleAlert} />
-        <Stat label="Applications created" value={stats.total_applications} hint={`${stats.avg_applications_per_user} per candidate on average`} icon={Briefcase} />
-        <Stat label="Resumes generated" value={stats.total_resumes} icon={FileText} />
-        <Stat label="Cover letters" value={stats.total_cover_letters} icon={ScrollText} />
-        <Stat label="AI requests" value={stats.total_ai_requests} hint={`${stats.ai_requests_30d} in 30 days · ${stats.ai_errors_30d} failed`} icon={Bot} />
+        <Stat label="Total users" value={stats.total_users} hint={`${stats.total_candidates} candidates · ${stats.total_admins} admins`} icon={Users} tone="grape" />
+        <Stat label="New this month" value={stats.new_users_this_month} hint={`${stats.new_users_last_month} last month`} icon={UserPlus} tone="ocean" />
+        <Stat label="Active users (30 days)" value={stats.active_users_30d} hint={`${stats.active_users_7d} in the last 7 days`} icon={Activity} tone="mint" />
+        <Stat label="Suspended" value={stats.suspended_users} icon={TriangleAlert} tone="coral" />
+        <Stat label="Applications created" value={stats.total_applications} hint={`${stats.avg_applications_per_user} per candidate on average`} icon={Briefcase} tone="sun" />
+        <Stat label="Resumes generated" value={stats.total_resumes} icon={FileText} tone="bloom" />
+        <Stat label="Cover letters" value={stats.total_cover_letters} icon={ScrollText} tone="ocean" />
+        <Stat label="AI requests" value={stats.total_ai_requests} hint={`${stats.ai_requests_30d} in 30 days · ${stats.ai_errors_30d} failed`} icon={Bot} tone="grape" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
